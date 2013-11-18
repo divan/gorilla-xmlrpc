@@ -135,7 +135,7 @@ For the better understanding, I use terms 'rpc2xml' and 'xml2xml' instead of 'ma
 | dateTime.iso8601 | time.Time     |
 | base64           | []byte        |
 | struct           | struct        |
-| array,slice      | []interface{} |
+| array            | []interface{} |
 
 ### TODO ###
 
