@@ -67,7 +67,7 @@ It's pretty self-explanatory and can be tested with any xmlrpc client, even raw 
 
 #### Client Example ####
 
-Implementing client is beyound of scope of this package, but with encoding/decoding handlers it should be pretty trivial. Here is the example which works with the example server introduced above.
+Implementing client is beyond the scope of this package, but with encoding/decoding handlers it should be pretty trivial. Here is an example which works with the server introduced above.
 
 package main
 
