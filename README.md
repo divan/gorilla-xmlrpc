@@ -124,6 +124,19 @@ Marshalling code converts rpc directly to the string XML representation.
 
 For the better understanding, I use terms 'rpc2xml' and 'xml2xml' instead of 'marshal' and 'unmarshall'.
 
+### Supported types ###
+
+| XML-RPC          | Golang        |
+| ---------------- | ------------- |
+| int, i4          | int           |
+| double           | float64       |
+| boolean          | bool          |
+| string           | string        |
+| dateTime.iso8601 | time.Time     |
+| base64           | []byte        |
+| struct           | struct        |
+| array,slice      | []interface{} |
+
 ### TODO ###
 
 *   Fault support according to XML-RPC spec (it will require some changes in gorilla/rpc module, will be discussed)
