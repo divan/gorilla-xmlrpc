@@ -6,12 +6,13 @@ It's built on top of gorilla/rpc package in Go(Golang) language and implements X
 
 So far it doesn't handle Faults/error correctly (as required by XML-RPC spec), but the work on it in progress.
 
-**NOTE: I hope this code soon will be part of Gorilla toolkit, so the path and the name will slightly change**
 
 ### Installing ###
 Assuming you already imported gorilla/rpc, use the following command:
 
     go get github.com/divan/gorilla-xmlrpc/xml
+
+**NOTE: I hope this code soon will be part of Gorilla toolkit, so the path and the name will slightly change**
 
 ### Examples ###
 	package main
@@ -57,11 +58,61 @@ Assuming you already imported gorilla/rpc, use the following command:
 
 It's pretty self-explanatory and can be tested with any xmlrpc client, even raw curl request:
 
-   curl -v -X POST -H "Content-Type: text/xml" \
-	       -d '<methodCall><methodName>HelloService.Say</methodName><params><param><value><struct><member><name>Who</name><value><string>XMLTest</string></value></member></struct></value></param><param><value><struct><member><name>Code</name><value><int>123</int></value></member></struct></value></param></params></methodCall>' \
-		       http://localhost:1234/api
+    curl -v -X POST -H "Content-Type: text/xml" -d '<methodCall><methodName>HelloService.Say</methodName><params><param><value><struct><member><name>Who</name><value><string>XMLTest</string></value></member></struct></value></param><param><value><struct><member><name>Code</name><value><int>123</int></value></member></struct></value></param></params></methodCall>' http://localhost:1234/api
+
+
+##### Client Example #####
+
+Implementing client is beyound of scope of this package, but with encoding/decoding handlers it should be pretty trivial. Here is the example which works with the example server introduced above.
+
+package main
+
+	import (
+		"log"
+		"bytes"
+		"net/http"
+		"github.com/divan/gorilla-xmlrpc/xml"
+	)
+
+	type HelloArgs struct {
+		Who string
+	}
+
+	type HelloReply struct {
+		Message string
+		Status int
+	}
+
+	func XmlRpcCall(method string, args HelloArgs) (reply HelloReply, err error) {
+		buf, _ := xml.EncodeClientRequest(method, &args)
+		body := bytes.NewBuffer(buf)
+
+		resp, err := http.Post("http://localhost:1234/RPC2", "text/xml", body)
+		if err != nil {
+			return
+		}
+		defer resp.Body.Close()
+
+		xml.DecodeClientResponse(resp.Body, &reply)
+		return
+	}
+
+	func main() {
+		args := HelloArgs{"User1"}
+		var reply HelloReply
+
+		reply, err := XmlRpcCall("HelloService.Say", args)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Printf("Response: %s (%d)\n", reply.Message, reply.Status)
+	}
 
 ## TODO ##
 
-
+*   Time / <dateTime.iso8601> support
+*   Base64 / <base64> support
+*   Fault support according to XML-RPC spec (it will require some changes in gorilla/rpc module, will be discussed)
+*   Make/find tests that cover corner cases for XML-RPC
 
