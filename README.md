@@ -15,6 +15,9 @@ Assuming you already imported gorilla/rpc, use the following command:
 **NOTE: I hope this code soon will be part of Gorilla toolkit, so the path and the name will slightly change**
 
 ### Examples ###
+
+#### Server Example ####
+
 	package main
 
 	import (
@@ -61,7 +64,7 @@ It's pretty self-explanatory and can be tested with any xmlrpc client, even raw 
     curl -v -X POST -H "Content-Type: text/xml" -d '<methodCall><methodName>HelloService.Say</methodName><params><param><value><struct><member><name>Who</name><value><string>XMLTest</string></value></member></struct></value></param><param><value><struct><member><name>Code</name><value><int>123</int></value></member></struct></value></param></params></methodCall>' http://localhost:1234/api
 
 
-##### Client Example #####
+#### Client Example ####
 
 Implementing client is beyound of scope of this package, but with encoding/decoding handlers it should be pretty trivial. Here is the example which works with the example server introduced above.
 
