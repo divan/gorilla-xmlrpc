@@ -126,7 +126,6 @@ For the better understanding, I use terms 'rpc2xml' and 'xml2xml' instead of 'ma
 
 ### TODO ###
 
-*   Base64  support
 *   Fault support according to XML-RPC spec (it will require some changes in gorilla/rpc module, will be discussed)
 *   Make/find tests that cover corner cases for XML-RPC
 

@@ -5,6 +5,7 @@
 package xml
 
 import (
+	"encoding/base64"
 	"fmt"
 	"reflect"
 	"strings"
@@ -61,7 +62,12 @@ func RPC2XML(value interface{}) (string, error) {
 			out += Time2XML(value.(time.Time))
 		}
 	case reflect.Slice, reflect.Array:
-		out += Array2XML(value)
+		// FIXME: is it the best way to recognize '[]byte'?
+		if reflect.TypeOf(value).String() != "[]uint8" {
+			out += Array2XML(value)
+		} else {
+			out += Base642XML(value.([]byte))
+		}
 	}
 	out += "</value>"
 	return out, nil
@@ -129,4 +135,9 @@ func Time2XML(t time.Time) string {
 	return fmt.Sprintf("<dateTime.iso8601>%04d%02d%02dT%02d:%02d:%02d</dateTime.iso8601>",
 		t.Year(), t.Month(), t.Day(),
 		t.Hour(), t.Minute(), t.Second())
+}
+
+func Base642XML(data []byte) string {
+	str := base64.StdEncoding.EncodeToString(data)
+	return fmt.Sprintf("<base64>%s</base64>", str)
 }

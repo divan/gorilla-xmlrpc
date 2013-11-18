@@ -5,6 +5,7 @@
 package xml
 
 import (
+	"encoding/base64"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -81,6 +82,8 @@ func Value2Field(value Value, field *reflect.Value) (err error) {
 		val = XML2Bool(value.Boolean)
 	case value.DateTime != "":
 		val, err = XML2DateTime(value.DateTime)
+	case value.Base64 != "":
+		val, err = XML2Base64(value.Base64)
 	case len(value.Struct) != 0:
 		s := value.Struct
 		for i := 0; i < len(s); i++ {
@@ -133,4 +136,8 @@ func XML2DateTime(value string) (time.Time, error) {
 		&hour, &minute, &second)
 	t := time.Date(year, time.Month(month), day, hour, minute, second, 0, time.Local)
 	return t, err
+}
+
+func XML2Base64(value string) ([]byte, error) {
+	return base64.StdEncoding.DecodeString(value)
 }
