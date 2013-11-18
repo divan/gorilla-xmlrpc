@@ -68,6 +68,10 @@ func XML2RPC(xmlraw string, rpc interface{}) (err error) {
 }
 
 func Value2Field(value Value, field *reflect.Value) (err error) {
+	if !field.CanSet() {
+		return errors.New("Something wrong, unsettable rpc field/item passed")
+	}
+
 	var val interface{}
 	switch {
 	case value.Int != "":
