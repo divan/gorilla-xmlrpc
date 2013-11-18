@@ -10,8 +10,8 @@ import (
 )
 
 type SubStructXml2Rpc struct {
-	Foo int
-	Bar string
+	Foo  int
+	Bar  string
 	Data []int
 }
 
@@ -29,7 +29,7 @@ func TestXML2RPC(t *testing.T) {
 	if err != nil {
 		t.Error("XML2RPC conversion failed", err)
 	}
-	expected_req := &StructXml2Rpc{123, 3.145926, "Hello, World!", false, SubStructXml2Rpc{42, "I'm Bar", []int{1,2,3}}}
+	expected_req := &StructXml2Rpc{123, 3.145926, "Hello, World!", false, SubStructXml2Rpc{42, "I'm Bar", []int{1, 2, 3}}}
 	if !reflect.DeepEqual(req, expected_req) {
 		t.Error("XML2RPC conversion failed")
 		t.Error("Expected", expected_req)

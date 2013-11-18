@@ -7,8 +7,8 @@ package xml
 import "testing"
 
 type SubStructRpc2Xml struct {
-	Foo int
-	Bar string
+	Foo  int
+	Bar  string
 	Data []int
 }
 
@@ -21,7 +21,7 @@ type StructRpc2Xml struct {
 }
 
 func TestRPC2XML(t *testing.T) {
-	req := &StructRpc2Xml{123, 3.145926, "Hello, World!", false, SubStructRpc2Xml{42, "I'm Bar", []int{1,2,3}}}
+	req := &StructRpc2Xml{123, 3.145926, "Hello, World!", false, SubStructRpc2Xml{42, "I'm Bar", []int{1, 2, 3}}}
 	xml, err := RPCRequest2XML("Some.Method", req)
 	if err != nil {
 		t.Error("RPC2XML conversion failed", err)

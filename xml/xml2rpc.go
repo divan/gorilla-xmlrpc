@@ -88,7 +88,7 @@ func Value2Field(value Value, field *reflect.Value) (err error) {
 		a := value.Array
 		f := *field
 		slice := reflect.MakeSlice(reflect.TypeOf(f.Interface()),
-				len(a), len(a))
+			len(a), len(a))
 		for i := 0; i < len(a); i++ {
 			item := slice.Index(i)
 			err = Value2Field(a[i], &item)
