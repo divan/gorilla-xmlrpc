@@ -115,7 +115,6 @@ package main
 
 ## TODO ##
 
-*   Time / <dateTime.iso8601> support
 *   Base64 / <base64> support
 *   Fault support according to XML-RPC spec (it will require some changes in gorilla/rpc module, will be discussed)
 *   Make/find tests that cover corner cases for XML-RPC
