@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"unicode"
+	"unicode/utf8"
 	"time"
 )
 
@@ -91,7 +93,10 @@ func Value2Field(value Value, field *reflect.Value) (err error) {
 	case len(value.Struct) != 0:
 		s := value.Struct
 		for i := 0; i < len(s); i++ {
-			f := field.FieldByName(s[i].Name)
+			// Uppercase first letter for field name to deal with
+			// methods in lowercase, which cannot be used
+			field_name := uppercaseFirst(s[i].Name)
+			f := field.FieldByName(field_name)
 			err = Value2Field(s[i].Value, &f)
 		}
 	case len(value.Array) != 0:
@@ -144,4 +149,9 @@ func XML2DateTime(value string) (time.Time, error) {
 
 func XML2Base64(value string) ([]byte, error) {
 	return base64.StdEncoding.DecodeString(value)
+}
+
+func uppercaseFirst(in string) (out string) {
+	r, n := utf8.DecodeRuneInString(in)
+	return string(unicode.ToUpper(r)) + in[n:]
 }

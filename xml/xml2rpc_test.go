@@ -75,3 +75,28 @@ func TestXML2RPCNil(t *testing.T) {
 		t.Error("Got", req)
 	}
 }
+
+type StructXml2RpcSubArgs struct {
+	String1 string
+	String2 string
+	Id int
+}
+
+type StructXml2RpcHelloArgs struct {
+	Args StructXml2RpcSubArgs
+}
+
+func TestXML2RPCLowercasedMethods(t *testing.T) {
+	req := new(StructXml2RpcHelloArgs)
+	err := XML2RPC("<methodCall><params><param><value><struct><member><name>string1</name><value><string>I'm a first string</string></value></member><member><name>string2</name><value><string>I'm a second string</string></value></member><member><name>id</name><value><int>1</int></value></member></struct></value></param></params></methodCall>", req)
+	if err != nil {
+		t.Error("XML2RPC conversion failed", err)
+	}
+	args := StructXml2RpcSubArgs{"I'm a first string", "I'm a second string", 1}
+	expected_req := &StructXml2RpcHelloArgs{args}
+	if !reflect.DeepEqual(req, expected_req) {
+		t.Error("XML2RPC conversion failed")
+		t.Error("Expected", expected_req)
+		t.Error("Got", req)
+	}
+}
