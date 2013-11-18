@@ -56,3 +56,21 @@ func TestRPC2XMLSpecialChars(t *testing.T) {
 		t.Error("Got", xml)
 	}
 }
+
+type StructNilRpc2Xml struct {
+	Ptr *int
+}
+
+func TestRpc2XmlNil(t *testing.T) {
+	req := &StructNilRpc2Xml{nil}
+	xml, err := RPCResponse2XML(req)
+	if err != nil {
+		t.Error("RPC2XML conversion failed", err)
+	}
+	expected := "<methodResponse><params><param><value><nil/></value></param></params></methodResponse>"
+	if xml != expected {
+		t.Error("RPC2XML Special chars conversion failed")
+		t.Error("Expected", expected)
+		t.Error("Got", xml)
+	}
+}

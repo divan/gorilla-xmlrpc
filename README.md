@@ -136,6 +136,7 @@ For the better understanding, I use terms 'rpc2xml' and 'xml2xml' instead of 'ma
 | base64           | []byte        |
 | struct           | struct        |
 | array            | []interface{} |
+| nil              | nil           |
 
 ### TODO ###
 

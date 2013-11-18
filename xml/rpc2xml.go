@@ -68,6 +68,10 @@ func RPC2XML(value interface{}) (string, error) {
 		} else {
 			out += Base642XML(value.([]byte))
 		}
+	case reflect.Ptr:
+		if reflect.ValueOf(value).IsNil() {
+			out += "<nil/>"
+		}
 	}
 	out += "</value>"
 	return out, nil

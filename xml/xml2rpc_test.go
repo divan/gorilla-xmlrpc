@@ -57,3 +57,21 @@ func TestXML2RPCSpecialChars(t *testing.T) {
 		t.Error("Got", req)
 	}
 }
+
+type StructNilXml2Rpc struct {
+	Ptr *int
+}
+
+func TestXML2RPCNil(t *testing.T) {
+	req := new(StructNilXml2Rpc)
+	err := XML2RPC("<methodResponse><params><param><value><nil/></value></param></params></methodResponse>", req)
+	if err != nil {
+		t.Error("XML2RPC conversion failed", err)
+	}
+	expected_req := &StructNilXml2Rpc{nil}
+	if !reflect.DeepEqual(req, expected_req) {
+		t.Error("XML2RPC conversion failed")
+		t.Error("Expected", expected_req)
+		t.Error("Got", req)
+	}
+}
