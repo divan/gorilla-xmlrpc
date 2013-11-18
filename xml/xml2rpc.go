@@ -8,9 +8,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"time"
 	"reflect"
 	"strconv"
+	"time"
 )
 
 // Types used for unmarshalling
@@ -125,12 +125,12 @@ func XML2Bool(value string) bool {
 
 func XML2DateTime(value string) (time.Time, error) {
 	var (
-		year, month, day int
+		year, month, day     int
 		hour, minute, second int
 	)
 	_, err := fmt.Sscanf(value, "%04d%02d%02dT%02d:%02d:%02d",
-			&year, &month, &day,
-			&hour, &minute, &second);
+		&year, &month, &day,
+		&hour, &minute, &second)
 	t := time.Date(year, time.Month(month), day, hour, minute, second, 0, time.Local)
 	return t, err
 }

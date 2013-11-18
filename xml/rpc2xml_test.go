@@ -4,7 +4,10 @@
 
 package xml
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 type SubStructRpc2Xml struct {
 	Foo  int
@@ -18,15 +21,16 @@ type StructRpc2Xml struct {
 	Str   string
 	Bool  bool
 	Sub   SubStructRpc2Xml
+	Time  time.Time
 }
 
 func TestRPC2XML(t *testing.T) {
-	req := &StructRpc2Xml{123, 3.145926, "Hello, World!", false, SubStructRpc2Xml{42, "I'm Bar", []int{1, 2, 3}}}
+	req := &StructRpc2Xml{123, 3.145926, "Hello, World!", false, SubStructRpc2Xml{42, "I'm Bar", []int{1, 2, 3}}, time.Date(2012, time.July, 17, 14, 8, 55, 0, time.Local)}
 	xml, err := RPCRequest2XML("Some.Method", req)
 	if err != nil {
 		t.Error("RPC2XML conversion failed", err)
 	}
-	expected := "<methodCall><methodName>Some.Method</methodName><params><param><value><int>123</int></value></param><param><value><double>3.145926</double></value></param><param><value><string>Hello, World!</string></value></param><param><value><boolean>0</boolean></value></param><param><value><struct><member><name>Foo</name><value><int>42</int></value></member><member><name>Bar</name><value><string>I'm Bar</string></value></member><member><name>Data</name><value><array><data><value><int>1</int></value><value><int>2</int></value><value><int>3</int></value></data></array></value></member></struct></value></param></params></methodCall>"
+	expected := "<methodCall><methodName>Some.Method</methodName><params><param><value><int>123</int></value></param><param><value><double>3.145926</double></value></param><param><value><string>Hello, World!</string></value></param><param><value><boolean>0</boolean></value></param><param><value><struct><member><name>Foo</name><value><int>42</int></value></member><member><name>Bar</name><value><string>I'm Bar</string></value></member><member><name>Data</name><value><array><data><value><int>1</int></value><value><int>2</int></value><value><int>3</int></value></data></array></value></member></struct></value></param><param><value><dateTime.iso8601>20120717T14:08:55</dateTime.iso8601></value></param></params></methodCall>"
 	if xml != expected {
 		t.Error("RPC2XML conversion failed")
 		t.Error("Expected", expected)

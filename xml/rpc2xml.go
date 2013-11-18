@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 )
 
 func RPCRequest2XML(method string, rpc interface{}) (string, error) {
@@ -54,7 +55,11 @@ func RPC2XML(value interface{}) (string, error) {
 	case reflect.Bool:
 		out += Bool2XML(value.(bool))
 	case reflect.Struct:
-		out += Struct2XML(value)
+		if reflect.TypeOf(value).String() != "time.Time" {
+			out += Struct2XML(value)
+		} else {
+			out += Time2XML(value.(time.Time))
+		}
 	case reflect.Slice, reflect.Array:
 		out += Array2XML(value)
 	}
@@ -107,4 +112,21 @@ func Array2XML(value interface{}) (out string) {
 	}
 	out += "</data></array>"
 	return
+}
+
+func Time2XML(t time.Time) string {
+	/*
+		// TODO: find out whether we need to deal
+		// here with TZ
+		var tz string;
+		zone, offset := t.Zone()
+		if zone == "UTC" {
+			tz = "Z"
+		} else {
+			tz = fmt.Sprintf("%03d00", offset / 3600 )
+		}
+	*/
+	return fmt.Sprintf("<dateTime.iso8601>%04d%02d%02dT%02d:%02d:%02d</dateTime.iso8601>",
+		t.Year(), t.Month(), t.Day(),
+		t.Hour(), t.Minute(), t.Second())
 }
