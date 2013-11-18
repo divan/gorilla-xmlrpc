@@ -2,13 +2,13 @@
 
 This is an XML-RPC protocol implementation for the Gorilla/RPC toolkit.
 
-It's built on top of gorilla/rpc package in Go(Golang) language and implements XML-RPC, according to [it's specifiaction](http://xmlrpc.scripting.com/spec.html).
+It's built on top of gorilla/rpc package in Go(Golang) language and implements XML-RPC, according to [it's specification](http://xmlrpc.scripting.com/spec.html).
 Unlike Go standard net/rpc, gorilla/rpc allows usage HTTP POST requests for RPC.
 
 So far it doesn't handle Faults/error correctly (as required by XML-RPC spec), but the work on it in progress.
 
 
-### Installing ###
+### Installation ###
 Assuming you already imported gorilla/rpc, use the following command:
 
     go get github.com/divan/gorilla-xmlrpc/xml
@@ -113,9 +113,21 @@ package main
 		log.Printf("Response: %s (%d)\n", reply.Message, reply.Status)
 	}
 
-## TODO ##
+### Implementation details ###
 
-*   Base64 / <base64> support
+The main objective was to use standard encoding/xml package for XML marshalling/unmarshalling. Unfortunately, in current implementation there is no graceful way to implement common structre for marshal and unmarshal functions - marshalling doesn't handle interface{} types so far (though, it could be changed in the future).
+So, marshalling is implemented manually.
+
+Unmarshalling code first creates temporary structure for unmarshalling XML into, then converts it into the passed variable using *reflect* package.
+
+Marshalling code converts rpc directly to the string XML representation.
+
+For the better understanding, I use terms 'rpc2xml' and 'xml2xml' instead of 'marshal' and 'unmarshall'.
+
+### TODO ###
+
+*   Time / dateTime.iso8601 support
+*   Base64  support
 *   Fault support according to XML-RPC spec (it will require some changes in gorilla/rpc module, will be discussed)
 *   Make/find tests that cover corner cases for XML-RPC
 
