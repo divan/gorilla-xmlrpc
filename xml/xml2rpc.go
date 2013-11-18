@@ -8,6 +8,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"time"
 	"reflect"
 	"strconv"
 )
@@ -78,6 +79,8 @@ func Value2Field(value Value, field *reflect.Value) (err error) {
 		val = value.String
 	case value.Boolean != "":
 		val = XML2Bool(value.Boolean)
+	case value.DateTime != "":
+		val, err = XML2DateTime(value.DateTime)
 	case len(value.Struct) != 0:
 		s := value.Struct
 		for i := 0; i < len(s); i++ {
@@ -118,4 +121,16 @@ func XML2Bool(value string) bool {
 		b = false
 	}
 	return b
+}
+
+func XML2DateTime(value string) (time.Time, error) {
+	var (
+		year, month, day int
+		hour, minute, second int
+	)
+	_, err := fmt.Sscanf(value, "%04d%02d%02dT%02d:%02d:%02d",
+			&year, &month, &day,
+			&hour, &minute, &second);
+	t := time.Date(year, time.Month(month), day, hour, minute, second, 0, time.Local)
+	return t, err
 }
