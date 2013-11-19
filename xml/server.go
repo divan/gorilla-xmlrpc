@@ -89,5 +89,5 @@ func (c *CodecRequest) WriteResponse(w http.ResponseWriter, response interface{}
 
 	w.Header().Set("Content-Type", "text/xml; charset=utf-8")
 	w.Write([]byte(xmlstr))
-	return c.err
+	return nil
 }

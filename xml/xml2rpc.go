@@ -91,6 +91,10 @@ func Value2Field(value Value, field *reflect.Value) (err error) {
 	case value.Base64 != "":
 		val, err = XML2Base64(value.Base64)
 	case len(value.Struct) != 0:
+		if field.Kind() != reflect.Struct {
+			err = fmt.Errorf("Structure fields mismatch: %s != %s", field.Kind(), reflect.Struct.String())
+			return
+		}
 		s := value.Struct
 		for i := 0; i < len(s); i++ {
 			// Uppercase first letter for field name to deal with
