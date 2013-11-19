@@ -119,6 +119,7 @@ The main objective was to use standard encoding/xml package for XML marshalling/
 So, marshalling is implemented manually.
 
 Unmarshalling code first creates temporary structure for unmarshalling XML into, then converts it into the passed variable using *reflect* package.
+If XML struct member's name is lowercased, it's first letter will be uppercased, as in Go/Gorilla field name must be exported(first-letter uppercased).
 
 Marshalling code converts rpc directly to the string XML representation.
 
