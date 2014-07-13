@@ -11,15 +11,20 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"time"
 	"unicode"
 	"unicode/utf8"
-	"time"
 )
 
 // Types used for unmarshalling
 type Response struct {
-	Name   xml.Name `xml:"methodResponse"`
-	Params []Param  `xml:"params>param"`
+	Name   xml.Name    `xml:"methodResponse"`
+	Params []Param     `xml:"params>param"`
+	Fault  FaultStruct `xml:"fault"`
+}
+
+type FaultStruct struct {
+	Values []Value `xml:"value"`
 }
 
 type Param struct {
@@ -51,6 +56,17 @@ func XML2RPC(xmlraw string, rpc interface{}) (err error) {
 		return
 	}
 
+	if len(ret.Fault.Values) > 0 {
+		// check the fault, if have fault, save the fault information here and return.
+		// TODO: how to express error code ?
+		_, errstr, err := GetFaultResponse(&ret.Fault)
+		if err != nil {
+			return err
+		} else {
+			return errors.New(errstr)
+		}
+	}
+
 	// Structures should have equal number of fields
 	if reflect.TypeOf(rpc).Elem().NumField() != len(ret.Params) {
 		return errors.New("Wrong number of arguments")
@@ -67,6 +83,24 @@ func XML2RPC(xmlraw string, rpc interface{}) (err error) {
 	}
 
 	return
+}
+
+func GetFaultResponse(this *FaultStruct) (int, string, error) {
+	var faultCode int
+	var faultString string
+	var reterr error
+
+	for _, v := range this.Values {
+		for _, m := range v.Struct {
+			if m.Name == "faultCode" {
+				faultCode, reterr = strconv.Atoi(m.Value.Int)
+			} else if m.Name == "faultString" {
+				faultString = m.Value.String
+			}
+		}
+	}
+
+	return faultCode, faultString, reterr
 }
 
 func Value2Field(value Value, field *reflect.Value) (err error) {
