@@ -41,6 +41,7 @@ type Value struct {
 	Boolean  string   `xml:"boolean"`
 	DateTime string   `xml:"dateTime.iso8601"`
 	Base64   string   `xml:"base64"`
+	Raw      string   `xml:",innerxml"` // the value can be defualt string
 }
 
 type Member struct {
@@ -96,6 +97,10 @@ func GetFaultResponse(this *FaultStruct) (int, string, error) {
 				faultCode, reterr = strconv.Atoi(m.Value.Int)
 			} else if m.Name == "faultString" {
 				faultString = m.Value.String
+				if len(faultString) == 0 {
+					faultString = m.Value.Raw
+				}
+
 			}
 		}
 	}
@@ -148,6 +153,13 @@ func Value2Field(value Value, field *reflect.Value) (err error) {
 		}
 		f = reflect.AppendSlice(f, slice)
 		val = f.Interface()
+
+	default:
+		// value field is default to string, see http://en.wikipedia.org/wiki/XML-RPC#Data_types
+		// also can be </nil>
+		if value.Raw != "<nil/>" {
+			val = value.Raw
+		}
 	}
 
 	if val != nil {
