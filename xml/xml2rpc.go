@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -49,27 +48,23 @@ type Member struct {
 	Value Value  `xml:"value"`
 }
 
-func XML2RPC(xmlraw string, rpc interface{}) (err error) {
+func XML2RPC(xmlraw string, rpc interface{}) error {
 	// Unmarshal raw XML into the temporal structure
 	var ret Response
 	decoder := xml.NewDecoder(bytes.NewReader([]byte(xmlraw)))
 	decoder.CharsetReader = charset.NewReader
-	err = decoder.Decode(&ret)
+	err := decoder.Decode(&ret)
 	if err != nil {
-		return
+		return FaultDecode
 	}
 
 	if !ret.Fault.IsEmpty() {
-		fault, err := getFaultResponse(ret.Fault)
-		if err != nil {
-			return err
-		}
-		return fault
+		return getFaultResponse(ret.Fault)
 	}
 
 	// Structures should have equal number of fields
 	if reflect.TypeOf(rpc).Elem().NumField() != len(ret.Params) {
-		return errors.New("Wrong number of arguments")
+		return FaultWrongArgumentsNumber
 	}
 
 	// Now, convert temporal structure into the
@@ -78,24 +73,23 @@ func XML2RPC(xmlraw string, rpc interface{}) (err error) {
 		field := reflect.ValueOf(rpc).Elem().Field(i)
 		err = Value2Field(param.Value, &field)
 		if err != nil {
-			return
+			return err
 		}
 	}
 
-	return
+	return nil
 }
 
 // getFaultResponse converts FaultValue to Fault.
-func getFaultResponse(fault FaultValue) (Fault, error) {
+func getFaultResponse(fault FaultValue) Fault {
 	var (
 		code int
 		str string
-		err error
 	)
 
 	for _, field := range fault.Value.Struct {
 		if field.Name == "faultCode" {
-			code, err = strconv.Atoi(field.Value.Int)
+			code, _ = strconv.Atoi(field.Value.Int)
 		} else if field.Name == "faultString" {
 			str = field.Value.String
 			if str == "" {
@@ -104,12 +98,12 @@ func getFaultResponse(fault FaultValue) (Fault, error) {
 		}
 	}
 
-	return Fault{Code: code, String: str}, err
+	return Fault{Code: code, String: str}
 }
 
 func Value2Field(value Value, field *reflect.Value) error {
 	if !field.CanSet() {
-		return errors.New("Something wrong, unsettable rpc field/item passed")
+		return FaultApplicationError
 	}
 
 	var (
@@ -134,7 +128,9 @@ func Value2Field(value Value, field *reflect.Value) error {
 		val, err = XML2Base64(value.Base64)
 	case len(value.Struct) != 0:
 		if field.Kind() != reflect.Struct {
-			return fmt.Errorf("Structure fields mismatch: %s != %s", field.Kind(), reflect.Struct.String())
+			fault := FaultInvalidParams
+			fault.String += fmt.Sprintf("structure fields mismatch: %s != %s", field.Kind(), reflect.Struct.String())
+			return fault
 		}
 		s := value.Struct
 		for i := 0; i < len(s); i++ {
@@ -166,9 +162,11 @@ func Value2Field(value Value, field *reflect.Value) error {
 
 	if val != nil {
 		if reflect.TypeOf(val) != reflect.TypeOf(field.Interface()) {
-			return errors.New(fmt.Sprintf("Fields type mismatch: %s != %s",
+			fault := FaultInvalidParams
+			fault.String += fmt.Sprintf(": fields type mismatch: %s != %s",
 				reflect.TypeOf(val),
-				reflect.TypeOf(field.Interface())))
+				reflect.TypeOf(field.Interface()))
+			return fault
 		}
 
 		field.Set(reflect.ValueOf(val))

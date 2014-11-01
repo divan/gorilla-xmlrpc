@@ -17,11 +17,10 @@ func EncodeClientRequest(method string, args interface{}) ([]byte, error) {
 
 // DecodeClientResponse decodes the response body of a client request into
 // the interface reply.
-func DecodeClientResponse(r io.Reader, reply interface{}) (err error) {
+func DecodeClientResponse(r io.Reader, reply interface{}) error {
 	rawxml, err := ioutil.ReadAll(r)
 	if err != nil {
-		return
+		return FaultSystemError
 	}
-	err = XML2RPC(string(rawxml), reply)
-	return
+	return XML2RPC(string(rawxml), reply)
 }

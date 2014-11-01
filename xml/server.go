@@ -6,6 +6,7 @@ package xml
 
 import (
 	"encoding/xml"
+	"fmt"
 	"github.com/gorilla/rpc"
 	"io/ioutil"
 	"net/http"
@@ -81,7 +82,14 @@ func (c *CodecRequest) ReadRequest(args interface{}) error {
 func (c *CodecRequest) WriteResponse(w http.ResponseWriter, response interface{}, methodErr error) error {
 	var xmlstr string
 	if c.err != nil {
-		fault := Fault{1, c.err.Error()}
+		var fault Fault
+		switch c.err.(type) {
+		case Fault:
+			fault = c.err.(Fault)
+		default:
+			fault = FaultApplicationError
+			fault.String += fmt.Sprintf(": %v", c.err)
+		}
 		xmlstr = Fault2XML(fault)
 	} else {
 		xmlstr, _ = RPCResponse2XML(response)

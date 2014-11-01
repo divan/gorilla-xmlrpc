@@ -51,18 +51,33 @@ func TestFaults(t *testing.T) {
 	var res1 FaultTestResponse
 	err = execute(t, s, "FaultTest.Multiply", &FaultTestBadRequest{4, 2, 4}, &res1)
 	if err == nil {
-		t.Error("Expected err to be not nil, but got:", err)
+		t.Fatal("expected err to be not nil, but got:", err)
 	}
-	if err.Error() != "1: Wrong number of arguments" {
-		t.Errorf("Wrong response: %v.", err.Error())
+	fault, ok := err.(Fault)
+	if !ok {
+		t.Fatal("expected error to be of concrete type Fault, but got", err)
+	}
+	if fault.Code != -32602 {
+		t.Errorf("wrong fault code: %d", fault.Code)
+	}
+	if fault.String != "Wrong Arguments Number" {
+		t.Errorf("wrong fault string: %s", fault.String)
 	}
 
 	var res2 FaultTestBadResponse
 	err = execute(t, s, "FaultTest.Multiply", &FaultTestRequest{4, 2}, &res2)
 	if err == nil {
-		t.Error("Expected err to be not nil, but got:", err)
+		t.Fatal("expected err to be not nil, but got:", err)
 	}
-	if !strings.HasPrefix(err.Error(), "Fields type mismatch") {
-		t.Errorf("Wrong response: %v.", err.Error())
+	fault, ok = err.(Fault)
+	if !ok {
+		t.Fatal("expected error to be of concrete type Fault, but got", err)
+	}
+	if fault.Code != -32602 {
+		t.Errorf("wrong fault code: %d", fault.Code)
+	}
+
+	if !strings.HasPrefix(fault.String, "Invalid Method Parameters: fields type mismatch") {
+		t.Errorf("wrong response: %s", fault.String)
 	}
 }
