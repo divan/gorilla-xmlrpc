@@ -79,7 +79,7 @@ func TestXML2RPCNil(t *testing.T) {
 type StructXml2RpcSubArgs struct {
 	String1 string
 	String2 string
-	Id int
+	Id      int
 }
 
 type StructXml2RpcHelloArgs struct {
@@ -98,5 +98,52 @@ func TestXML2RPCLowercasedMethods(t *testing.T) {
 		t.Error("XML2RPC conversion failed")
 		t.Error("Expected", expected_req)
 		t.Error("Got", req)
+	}
+}
+
+func TestXML2PRCFaultCall(t *testing.T) {
+	req := new(StructXml2RpcHelloArgs)
+	data := `<?xmlversion="1.0"?><methodResponse><fault><value><struct><member><name>faultCode</name><value><int>116</int></value></member><member><name>faultString</name><value><string>Error
+Requiredattribute'user'notfound:
+[{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
+</string></value></member></struct></value></fault></methodResponse>`
+
+	errstr := `116: Error
+Requiredattribute'user'notfound:
+[{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
+`
+
+	err := XML2RPC(data, req)
+
+	if err == nil {
+		t.Error("should have found report error")
+	}
+
+	if err.Error() != errstr {
+		t.Errorf("error should be:\n\n%s\n\nbut got:\n\n%s\n", errstr, err.Error())
+	}
+
+}
+
+func TestXML2PRCISO(t *testing.T) {
+	req := new(StructXml2RpcHelloArgs)
+	data := `<?xml version="1.0"?><methodResponse><fault><value><struct><member><name>faultCode</name><value><int>116</int></value></member><member><name>faultString</name><value><string>Error
+Requiredattribute'user'notfound:
+[{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
+</string></value></member></struct></value></fault></methodResponse>`
+
+	errstr := `116: Error
+Requiredattribute'user'notfound:
+[{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
+`
+
+	err := XML2RPC(data, req)
+
+	if err == nil {
+		t.Error("should have found report error")
+	}
+
+	if err.Error() != errstr {
+		t.Errorf("error should be:\n\n%s\n\nbut got:\n\n%s\n", errstr, err.Error())
 	}
 }

@@ -53,7 +53,7 @@ func TestFaults(t *testing.T) {
 	if err == nil {
 		t.Error("Expected err to be not nil, but got:", err)
 	}
-	if err.Error() != "Wrong number of arguments" {
+	if err.Error() != "1: Wrong number of arguments" {
 		t.Errorf("Wrong response: %v.", err.Error())
 	}
 

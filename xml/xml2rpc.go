@@ -11,15 +11,16 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"time"
 	"unicode"
 	"unicode/utf8"
-	"time"
 )
 
 // Types used for unmarshalling
 type Response struct {
-	Name   xml.Name `xml:"methodResponse"`
-	Params []Param  `xml:"params>param"`
+	Name   xml.Name    `xml:"methodResponse"`
+	Params []Param     `xml:"params>param"`
+	Fault  FaultValue  `xml:"fault,omitempty"`
 }
 
 type Param struct {
@@ -36,6 +37,7 @@ type Value struct {
 	Boolean  string   `xml:"boolean"`
 	DateTime string   `xml:"dateTime.iso8601"`
 	Base64   string   `xml:"base64"`
+	Raw      string   `xml:",innerxml"` // the value can be defualt string
 }
 
 type Member struct {
@@ -49,6 +51,14 @@ func XML2RPC(xmlraw string, rpc interface{}) (err error) {
 	err = xml.Unmarshal([]byte(xmlraw), &ret)
 	if err != nil {
 		return
+	}
+
+	if !ret.Fault.IsEmpty() {
+		fault, err := getFaultResponse(ret.Fault)
+		if err != nil {
+			return err
+		}
+		return fault
 	}
 
 	// Structures should have equal number of fields
@@ -69,12 +79,38 @@ func XML2RPC(xmlraw string, rpc interface{}) (err error) {
 	return
 }
 
-func Value2Field(value Value, field *reflect.Value) (err error) {
+// getFaultResponse converts FaultValue to Fault.
+func getFaultResponse(fault FaultValue) (Fault, error) {
+	var (
+		code int
+		str string
+		err error
+	)
+
+	for _, field := range fault.Value.Struct {
+		if field.Name == "faultCode" {
+			code, err = strconv.Atoi(field.Value.Int)
+		} else if field.Name == "faultString" {
+			str = field.Value.String
+			if str == "" {
+				str = field.Value.Raw
+			}
+		}
+	}
+
+	return Fault{Code: code, String: str}, err
+}
+
+func Value2Field(value Value, field *reflect.Value) error {
 	if !field.CanSet() {
 		return errors.New("Something wrong, unsettable rpc field/item passed")
 	}
 
-	var val interface{}
+	var (
+		err error
+		val interface{}
+	)
+
 	switch {
 	case value.Int != "":
 		val, _ = strconv.Atoi(value.Int)
@@ -92,8 +128,7 @@ func Value2Field(value Value, field *reflect.Value) (err error) {
 		val, err = XML2Base64(value.Base64)
 	case len(value.Struct) != 0:
 		if field.Kind() != reflect.Struct {
-			err = fmt.Errorf("Structure fields mismatch: %s != %s", field.Kind(), reflect.Struct.String())
-			return
+			return fmt.Errorf("Structure fields mismatch: %s != %s", field.Kind(), reflect.Struct.String())
 		}
 		s := value.Struct
 		for i := 0; i < len(s); i++ {
@@ -114,6 +149,13 @@ func Value2Field(value Value, field *reflect.Value) (err error) {
 		}
 		f = reflect.AppendSlice(f, slice)
 		val = f.Interface()
+
+	default:
+		// value field is default to string, see http://en.wikipedia.org/wiki/XML-RPC#Data_types
+		// also can be <nil/>
+		if value.Raw != "<nil/>" {
+			val = value.Raw
+		}
 	}
 
 	if val != nil {
@@ -125,7 +167,8 @@ func Value2Field(value Value, field *reflect.Value) (err error) {
 
 		field.Set(reflect.ValueOf(val))
 	}
-	return
+
+	return err
 }
 
 func XML2Bool(value string) bool {
