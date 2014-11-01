@@ -108,42 +108,48 @@ Requiredattribute'user'notfound:
 [{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
 </string></value></member></struct></value></fault></methodResponse>`
 
-	errstr := `116: Error
+	errstr := `Error
 Requiredattribute'user'notfound:
 [{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
 `
 
 	err := XML2RPC(data, req)
 
-	if err == nil {
-		t.Error("should have found report error")
+	fault, ok := err.(Fault)
+	if !ok {
+		t.Errorf("error should be of concrete type Fault, but got %v", err)
+	} else {
+		if fault.Code != 116 {
+			t.Errorf("expected fault.Code to be %d, but got %d", 116, fault.Code)
+		}
+		if fault.String != errstr {
+			t.Errorf("fault.String should be:\n\n%s\n\nbut got:\n\n%s\n", errstr, fault.String)
+		}
 	}
-
-	if err.Error() != errstr {
-		t.Errorf("error should be:\n\n%s\n\nbut got:\n\n%s\n", errstr, err.Error())
-	}
-
 }
 
 func TestXML2PRCISO(t *testing.T) {
 	req := new(StructXml2RpcHelloArgs)
-	data := `<?xml version="1.0"?><methodResponse><fault><value><struct><member><name>faultCode</name><value><int>116</int></value></member><member><name>faultString</name><value><string>Error
+	data := `<?xml version="1.0" encoding="ISO-8859-1"?><methodResponse><fault><value><struct><member><name>faultCode</name><value><int>116</int></value></member><member><name>faultString</name><value><string>Error
 Requiredattribute'user'notfound:
 [{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
 </string></value></member></struct></value></fault></methodResponse>`
 
-	errstr := `116: Error
+	errstr := `Error
 Requiredattribute'user'notfound:
-[{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
-`
+[{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]`
 
 	err := XML2RPC(data, req)
 
-	if err == nil {
-		t.Error("should have found report error")
-	}
-
-	if err.Error() != errstr {
-		t.Errorf("error should be:\n\n%s\n\nbut got:\n\n%s\n", errstr, err.Error())
+	fault, ok := err.(Fault)
+	if !ok {
+		t.Errorf("error should be of concrete type Fault, but got %v", err)
+	} else {
+		if fault.Code != 116 {
+			t.Errorf("expected fault.Code to be %d, but got %d", 116, fault.Code)
+		}
+		if fault.String != errstr {
+			t.Errorf("fault.String should be:\n\n%s\n\nbut got:\n\n%s\n", errstr, fault.String)
+		}
 	}
 }
