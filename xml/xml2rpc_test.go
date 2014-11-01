@@ -103,13 +103,12 @@ func TestXML2RPCLowercasedMethods(t *testing.T) {
 
 func TestXML2PRCFaultCall(t *testing.T) {
 	req := new(StructXml2RpcHelloArgs)
-	data := `
-<?xmlversion="1.0"?><methodResponse><fault><value><struct><member><name>faultCode</name><value><int>-116</int></value></member><member><name>faultString</name><value><string>Error-116
+	data := `<?xmlversion="1.0"?><methodResponse><fault><value><struct><member><name>faultCode</name><value><int>116</int></value></member><member><name>faultString</name><value><string>Error
 Requiredattribute'user'notfound:
 [{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
 </string></value></member></struct></value></fault></methodResponse>`
 
-	errstr := `Error-116
+	errstr := `116: Error
 Requiredattribute'user'notfound:
 [{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
 `
@@ -121,20 +120,19 @@ Requiredattribute'user'notfound:
 	}
 
 	if err.Error() != errstr {
-		t.Error("error should same:%s  \n\n Other: %s \n", err.Error(), errstr)
+		t.Errorf("error should be:\n\n%s\n\nbut got:\n\n%s\n", errstr, err.Error())
 	}
 
 }
 
 func TestXML2PRCISO(t *testing.T) {
 	req := new(StructXml2RpcHelloArgs)
-	data := `
-<?xml version="1.0" encoding="ISO-8859-1"?><methodResponse><fault><value><struct><member><name>faultCode</name><value><int>-116</int></value></member><member><name>faultString</name><value><string>Error-116
+	data := `<?xml version="1.0"?><methodResponse><fault><value><struct><member><name>faultCode</name><value><int>116</int></value></member><member><name>faultString</name><value><string>Error
 Requiredattribute'user'notfound:
 [{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
 </string></value></member></struct></value></fault></methodResponse>`
 
-	errstr := `Error-116
+	errstr := `116: Error
 Requiredattribute'user'notfound:
 [{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
 `
@@ -146,7 +144,6 @@ Requiredattribute'user'notfound:
 	}
 
 	if err.Error() != errstr {
-		t.Error("error should same:%s  \n\n Other: %s \n", err.Error(), errstr)
+		t.Errorf("error should be:\n\n%s\n\nbut got:\n\n%s\n", errstr, err.Error())
 	}
-
 }

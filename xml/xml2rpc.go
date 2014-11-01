@@ -20,11 +20,7 @@ import (
 type Response struct {
 	Name   xml.Name    `xml:"methodResponse"`
 	Params []Param     `xml:"params>param"`
-	Fault  FaultStruct `xml:"fault"`
-}
-
-type FaultStruct struct {
-	Values []Value `xml:"value"`
+	Fault  FaultValue  `xml:"fault,omitempty"`
 }
 
 type Param struct {
@@ -57,15 +53,12 @@ func XML2RPC(xmlraw string, rpc interface{}) (err error) {
 		return
 	}
 
-	if len(ret.Fault.Values) > 0 {
-		// check the fault, if have fault, save the fault information here and return.
-		// TODO: how to express error code ?
-		_, errstr, err := GetFaultResponse(&ret.Fault)
+	if !ret.Fault.IsEmpty() {
+		fault, err := getFaultResponse(ret.Fault)
 		if err != nil {
 			return err
-		} else {
-			return errors.New(errstr)
 		}
+		return fault
 	}
 
 	// Structures should have equal number of fields
@@ -86,34 +79,38 @@ func XML2RPC(xmlraw string, rpc interface{}) (err error) {
 	return
 }
 
-func GetFaultResponse(this *FaultStruct) (int, string, error) {
-	var faultCode int
-	var faultString string
-	var reterr error
+// getFaultResponse converts FaultValue to Fault.
+func getFaultResponse(fault FaultValue) (Fault, error) {
+	var (
+		code int
+		str string
+		err error
+	)
 
-	for _, v := range this.Values {
-		for _, m := range v.Struct {
-			if m.Name == "faultCode" {
-				faultCode, reterr = strconv.Atoi(m.Value.Int)
-			} else if m.Name == "faultString" {
-				faultString = m.Value.String
-				if len(faultString) == 0 {
-					faultString = m.Value.Raw
-				}
-
+	for _, field := range fault.Value.Struct {
+		if field.Name == "faultCode" {
+			code, err = strconv.Atoi(field.Value.Int)
+		} else if field.Name == "faultString" {
+			str = field.Value.String
+			if str == "" {
+				str = field.Value.Raw
 			}
 		}
 	}
 
-	return faultCode, faultString, reterr
+	return Fault{Code: code, String: str}, err
 }
 
-func Value2Field(value Value, field *reflect.Value) (err error) {
+func Value2Field(value Value, field *reflect.Value) error {
 	if !field.CanSet() {
 		return errors.New("Something wrong, unsettable rpc field/item passed")
 	}
 
-	var val interface{}
+	var (
+		err error
+		val interface{}
+	)
+
 	switch {
 	case value.Int != "":
 		val, _ = strconv.Atoi(value.Int)
@@ -131,8 +128,7 @@ func Value2Field(value Value, field *reflect.Value) (err error) {
 		val, err = XML2Base64(value.Base64)
 	case len(value.Struct) != 0:
 		if field.Kind() != reflect.Struct {
-			err = fmt.Errorf("Structure fields mismatch: %s != %s", field.Kind(), reflect.Struct.String())
-			return
+			return fmt.Errorf("Structure fields mismatch: %s != %s", field.Kind(), reflect.Struct.String())
 		}
 		s := value.Struct
 		for i := 0; i < len(s); i++ {
@@ -156,7 +152,7 @@ func Value2Field(value Value, field *reflect.Value) (err error) {
 
 	default:
 		// value field is default to string, see http://en.wikipedia.org/wiki/XML-RPC#Data_types
-		// also can be </nil>
+		// also can be <nil/>
 		if value.Raw != "<nil/>" {
 			val = value.Raw
 		}
@@ -171,7 +167,8 @@ func Value2Field(value Value, field *reflect.Value) (err error) {
 
 		field.Set(reflect.ValueOf(val))
 	}
-	return
+
+	return err
 }
 
 func XML2Bool(value string) bool {
