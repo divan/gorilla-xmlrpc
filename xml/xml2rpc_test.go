@@ -128,16 +128,17 @@ Requiredattribute'user'notfound:
 	}
 }
 
-func TestXML2PRCISO(t *testing.T) {
+func TestXML2PRCISO88591(t *testing.T) {
 	req := new(StructXml2RpcHelloArgs)
 	data := `<?xml version="1.0" encoding="ISO-8859-1"?><methodResponse><fault><value><struct><member><name>faultCode</name><value><int>116</int></value></member><member><name>faultString</name><value><string>Error
 Requiredattribute'user'notfound:
-[{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
+[{'User',"`+"\xd6\xf1\xe4"+`"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
 </string></value></member></struct></value></fault></methodResponse>`
 
 	errstr := `Error
 Requiredattribute'user'notfound:
-[{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]`
+[{'User',"Öñä"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
+`
 
 	err := XML2RPC(data, req)
 

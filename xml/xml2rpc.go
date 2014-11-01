@@ -5,6 +5,7 @@
 package xml
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/xml"
 	"errors"
@@ -14,6 +15,9 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+
+	"code.google.com/p/go-charset/charset"
+	_ "code.google.com/p/go-charset/data"
 )
 
 // Types used for unmarshalling
@@ -48,7 +52,9 @@ type Member struct {
 func XML2RPC(xmlraw string, rpc interface{}) (err error) {
 	// Unmarshal raw XML into the temporal structure
 	var ret Response
-	err = xml.Unmarshal([]byte(xmlraw), &ret)
+	decoder := xml.NewDecoder(bytes.NewReader([]byte(xmlraw)))
+	decoder.CharsetReader = charset.NewReader
+	err = decoder.Decode(&ret)
 	if err != nil {
 		return
 	}
