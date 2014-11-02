@@ -44,7 +44,7 @@ TODO list:
 
 Examples
 
-Checkout some examples:
+Checkout examples in examples/ directory.
 
 */
 package xml
