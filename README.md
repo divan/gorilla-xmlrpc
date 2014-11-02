@@ -3,17 +3,12 @@
 This is an XML-RPC protocol implementation for the Gorilla/RPC toolkit.
 
 It's built on top of gorilla/rpc package in Go(Golang) language and implements XML-RPC, according to [it's specification](http://xmlrpc.scripting.com/spec.html).
-Unlike Go standard net/rpc, gorilla/rpc allows usage HTTP POST requests for RPC.
-
-So far it doesn't handle Faults/error correctly (as required by XML-RPC spec), but the work on it in progress.
-
+Unlike net/rpc from Go strlib, gorilla/rpc allows usage of HTTP POST requests for RPC.
 
 ### Installation ###
 Assuming you already imported gorilla/rpc, use the following command:
 
     go get github.com/divan/gorilla-xmlrpc/xml
-
-**NOTE: I hope this code soon will be part of Gorilla toolkit, so the path and the name will slightly change**
 
 ### Examples ###
 
@@ -29,21 +24,11 @@ import (
     "github.com/divan/gorilla-xmlrpc/xml"
 )
 
-type HelloArgs struct {
-    Who string
-}
-
-type HelloReply struct {
-    Message string
-    Status int
-}
-
 type HelloService struct{}
 
-func (h *HelloService) Say(r *http.Request, args *HelloArgs, reply *HelloReply) error {
+func (h *HelloService) Say(r *http.Request, args *struct{Who string}, reply *struct{Message string}) error {
     log.Println("Say", args.Who)
     reply.Message = "Hello, " + args.Who + "!"
-    reply.Status = 42
     return nil
 }
 
@@ -55,10 +40,7 @@ func main() {
     http.Handle("/RPC2", RPC)
 
     log.Println("Starting XML-RPC server on localhost:1234/RPC2")
-    err := http.ListenAndServe(":1234", nil)
-    if err != nil {
-        log.Fatal("ListenAndServer: ", err)
-    }
+    log.Fatal(http.ListenAndServe(":1234", nil))
 }
 ```
 
@@ -76,47 +58,34 @@ Implementing client is beyond the scope of this package, but with encoding/decod
 package main
 
 import (
-	"log"
-	"bytes"
-	"net/http"
-	"github.com/divan/gorilla-xmlrpc/xml"
+    "log"
+    "bytes"
+    "net/http"
+    "github.com/divan/gorilla-xmlrpc/xml"
 )
 
+func XmlRpcCall(method string, args struct{Who string}) (reply struct{Message string}, err error) {
+    buf, _ := xml.EncodeClientRequest(method, &args)
 
-type HelloArgs struct {
-	Who string
-}
+    resp, err := http.Post("http://localhost:1234/RPC2", "text/xml", bytes.NewBuffer(buf))
+    if err != nil {
+        return
+    }
+    defer resp.Body.Close()
 
-type HelloReply struct {
-	Message string
-	Status int
-}
-
-func XmlRpcCall(method string, args HelloArgs) (reply HelloReply, err error) {
-	buf, _ := xml.EncodeClientRequest(method, &args)
-	body := bytes.NewBuffer(buf)
-
-	resp, err := http.Post("http://localhost:1234/RPC2", "text/xml", body)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	xml.DecodeClientResponse(resp.Body, &reply)
-	return
+    err = xml.DecodeClientResponse(resp.Body, &reply)
+    return
 }
 
 func main() {
-	args := HelloArgs{"User1"}
-	var reply HelloReply
+    reply, err := XmlRpcCall("HelloService.Say", struct{Who string}{"User 1"})
+    if err != nil {
+        log.Fatal(err)
+    }
 
-	reply, err := XmlRpcCall("HelloService.Say", args)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("Response: %s (%d)\n", reply.Message, reply.Status)
+    log.Printf("Response: %s\n", reply.Message)
 }
+
 ```
 
 ### Implementation details ###
