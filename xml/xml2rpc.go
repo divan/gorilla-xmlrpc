@@ -21,9 +21,9 @@ import (
 
 // Types used for unmarshalling
 type Response struct {
-	Name   xml.Name    `xml:"methodResponse"`
-	Params []Param     `xml:"params>param"`
-	Fault  FaultValue  `xml:"fault,omitempty"`
+	Name   xml.Name   `xml:"methodResponse"`
+	Params []Param    `xml:"params>param"`
+	Fault  FaultValue `xml:"fault,omitempty"`
 }
 
 type Param struct {
@@ -84,7 +84,7 @@ func XML2RPC(xmlraw string, rpc interface{}) error {
 func getFaultResponse(fault FaultValue) Fault {
 	var (
 		code int
-		str string
+		str  string
 	)
 
 	for _, field := range fault.Value.Struct {

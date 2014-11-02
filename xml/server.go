@@ -7,9 +7,10 @@ package xml
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/gorilla/rpc"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/gorilla/rpc"
 )
 
 // ----------------------------------------------------------------------------

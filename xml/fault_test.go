@@ -5,10 +5,11 @@
 package xml
 
 import (
-	"github.com/gorilla/rpc"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/gorilla/rpc"
 )
 
 //////////////////////////////////
