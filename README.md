@@ -19,99 +19,105 @@ Assuming you already imported gorilla/rpc, use the following command:
 
 #### Server Example ####
 
-	package main
+```go
+package main
 
-	import (
-		"log"
-		"net/http"
-		"github.com/gorilla/rpc"
-		"github.com/divan/gorilla-xmlrpc/xml"
-	)
+import (
+    "log"
+    "net/http"
+    "github.com/gorilla/rpc"
+    "github.com/divan/gorilla-xmlrpc/xml"
+)
 
-	type HelloArgs struct {
-		Who string
-	}
+type HelloArgs struct {
+    Who string
+}
 
-	type HelloReply struct {
-		Message string
-		Status int
-	}
+type HelloReply struct {
+    Message string
+    Status int
+}
 
-	type HelloService struct{}
+type HelloService struct{}
 
-	func (h *HelloService) Say(r *http.Request, args *HelloArgs, reply *HelloReply) error {
-		log.Println("Say", args.Who)
-		reply.Message = "Hello, " + args.Who + "!"
-		reply.Status = 42
-		return nil
-	}
+func (h *HelloService) Say(r *http.Request, args *HelloArgs, reply *HelloReply) error {
+    log.Println("Say", args.Who)
+    reply.Message = "Hello, " + args.Who + "!"
+    reply.Status = 42
+    return nil
+}
 
-	func main() {
-		RPC := rpc.NewServer()
-		xmlrpcCodec := xml.NewCodec()
-		RPC.RegisterCodec(xmlrpcCodec, "text/xml")
-		RPC.RegisterService(new(HelloService), "")
-		http.Handle("/RPC2", RPC)
+func main() {
+    RPC := rpc.NewServer()
+    xmlrpcCodec := xml.NewCodec()
+    RPC.RegisterCodec(xmlrpcCodec, "text/xml")
+    RPC.RegisterService(new(HelloService), "")
+    http.Handle("/RPC2", RPC)
 
-		log.Println("Starting XML-RPC server on localhost:1234/RPC2")
-		err := http.ListenAndServe(":1234", nil)
-		if err != nil {
-			log.Fatal("ListenAndServer: ", err)
-		}
-	}
+    log.Println("Starting XML-RPC server on localhost:1234/RPC2")
+    err := http.ListenAndServe(":1234", nil)
+    if err != nil {
+        log.Fatal("ListenAndServer: ", err)
+    }
+}
+```
 
 It's pretty self-explanatory and can be tested with any xmlrpc client, even raw curl request:
 
-    curl -v -X POST -H "Content-Type: text/xml" -d '<methodCall><methodName>HelloService.Say</methodName><params><param><value><struct><member><name>Who</name><value><string>XMLTest</string></value></member></struct></value></param><param><value><struct><member><name>Code</name><value><int>123</int></value></member></struct></value></param></params></methodCall>' http://localhost:1234/RPC2
-
+```bash
+curl -v -X POST -H "Content-Type: text/xml" -d '<methodCall><methodName>HelloService.Say</methodName><params><param><value><struct><member><name>Who</name><value><string>XMLTest</string></value></member></struct></value></param><param><value><struct><member><name>Code</name><value><int>123</int></value></member></struct></value></param></params></methodCall>' http://localhost:1234/RPC2
+```
 
 #### Client Example ####
 
 Implementing client is beyond the scope of this package, but with encoding/decoding handlers it should be pretty trivial. Here is an example which works with the server introduced above.
 
+```go
 package main
 
-	import (
-		"log"
-		"bytes"
-		"net/http"
-		"github.com/divan/gorilla-xmlrpc/xml"
-	)
+import (
+	"log"
+	"bytes"
+	"net/http"
+	"github.com/divan/gorilla-xmlrpc/xml"
+)
 
-	type HelloArgs struct {
-		Who string
-	}
 
-	type HelloReply struct {
-		Message string
-		Status int
-	}
+type HelloArgs struct {
+	Who string
+}
 
-	func XmlRpcCall(method string, args HelloArgs) (reply HelloReply, err error) {
-		buf, _ := xml.EncodeClientRequest(method, &args)
-		body := bytes.NewBuffer(buf)
+type HelloReply struct {
+	Message string
+	Status int
+}
 
-		resp, err := http.Post("http://localhost:1234/RPC2", "text/xml", body)
-		if err != nil {
-			return
-		}
-		defer resp.Body.Close()
+func XmlRpcCall(method string, args HelloArgs) (reply HelloReply, err error) {
+	buf, _ := xml.EncodeClientRequest(method, &args)
+	body := bytes.NewBuffer(buf)
 
-		xml.DecodeClientResponse(resp.Body, &reply)
+	resp, err := http.Post("http://localhost:1234/RPC2", "text/xml", body)
+	if err != nil {
 		return
 	}
+	defer resp.Body.Close()
 
-	func main() {
-		args := HelloArgs{"User1"}
-		var reply HelloReply
+	xml.DecodeClientResponse(resp.Body, &reply)
+	return
+}
 
-		reply, err := XmlRpcCall("HelloService.Say", args)
-		if err != nil {
-			log.Fatal(err)
-		}
+func main() {
+	args := HelloArgs{"User1"}
+	var reply HelloReply
 
-		log.Printf("Response: %s (%d)\n", reply.Message, reply.Status)
+	reply, err := XmlRpcCall("HelloService.Say", args)
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	log.Printf("Response: %s (%d)\n", reply.Message, reply.Status)
+}
+```
 
 ### Implementation details ###
 
@@ -123,7 +129,7 @@ If XML struct member's name is lowercased, it's first letter will be uppercased,
 
 Marshalling code converts rpc directly to the string XML representation.
 
-For the better understanding, I use terms 'rpc2xml' and 'xml2xml' instead of 'marshal' and 'unmarshall'.
+For the better understanding, I use terms 'rpc2xml' and 'xml2rpc' instead of 'marshal' and 'unmarshall'.
 
 ### Supported types ###
 
@@ -141,6 +147,5 @@ For the better understanding, I use terms 'rpc2xml' and 'xml2xml' instead of 'ma
 
 ### TODO ###
 
-*   Fault support according to XML-RPC spec (it will require some changes in gorilla/rpc module, will be discussed)
-*   Make/find tests that cover corner cases for XML-RPC
+*  Add more corner cases tests
 
