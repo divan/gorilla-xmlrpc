@@ -28,7 +28,7 @@ type StructXml2Rpc struct {
 
 func TestXML2RPC(t *testing.T) {
 	req := new(StructXml2Rpc)
-	err := XML2RPC("<methodCall><methodName>Some.Method</methodName><params><param><value><i4>123</i4></value></param><param><value><double>3.145926</double></value></param><param><value><string>Hello, World!</string></value></param><param><value><boolean>0</boolean></value></param><param><value><struct><member><name>Foo</name><value><int>42</int></value></member><member><name>Bar</name><value><string>I'm Bar</string></value></member><member><name>Data</name><value><array><data><value><int>1</int></value><value><int>2</int></value><value><int>3</int></value></data></array></value></member></struct></value></param><param><value><dateTime.iso8601>20120717T14:08:55</dateTime.iso8601></value></param><param><value><base64>eW91IGNhbid0IHJlYWQgdGhpcyE=</base64></value></param></params></methodCall>", req)
+	err := xml2RPC("<methodCall><methodName>Some.Method</methodName><params><param><value><i4>123</i4></value></param><param><value><double>3.145926</double></value></param><param><value><string>Hello, World!</string></value></param><param><value><boolean>0</boolean></value></param><param><value><struct><member><name>Foo</name><value><int>42</int></value></member><member><name>Bar</name><value><string>I'm Bar</string></value></member><member><name>Data</name><value><array><data><value><int>1</int></value><value><int>2</int></value><value><int>3</int></value></data></array></value></member></struct></value></param><param><value><dateTime.iso8601>20120717T14:08:55</dateTime.iso8601></value></param><param><value><base64>eW91IGNhbid0IHJlYWQgdGhpcyE=</base64></value></param></params></methodCall>", req)
 	if err != nil {
 		t.Error("XML2RPC conversion failed", err)
 	}
@@ -46,7 +46,7 @@ type StructSpecialCharsXml2Rpc struct {
 
 func TestXML2RPCSpecialChars(t *testing.T) {
 	req := new(StructSpecialCharsXml2Rpc)
-	err := XML2RPC("<methodResponse><params><param><value><string> &amp; &quot; &lt; &gt; </string></value></param></params></methodResponse>", req)
+	err := xml2RPC("<methodResponse><params><param><value><string> &amp; &quot; &lt; &gt; </string></value></param></params></methodResponse>", req)
 	if err != nil {
 		t.Error("XML2RPC conversion failed", err)
 	}
@@ -64,7 +64,7 @@ type StructNilXml2Rpc struct {
 
 func TestXML2RPCNil(t *testing.T) {
 	req := new(StructNilXml2Rpc)
-	err := XML2RPC("<methodResponse><params><param><value><nil/></value></param></params></methodResponse>", req)
+	err := xml2RPC("<methodResponse><params><param><value><nil/></value></param></params></methodResponse>", req)
 	if err != nil {
 		t.Error("XML2RPC conversion failed", err)
 	}
@@ -88,7 +88,7 @@ type StructXml2RpcHelloArgs struct {
 
 func TestXML2RPCLowercasedMethods(t *testing.T) {
 	req := new(StructXml2RpcHelloArgs)
-	err := XML2RPC("<methodCall><params><param><value><struct><member><name>string1</name><value><string>I'm a first string</string></value></member><member><name>string2</name><value><string>I'm a second string</string></value></member><member><name>id</name><value><int>1</int></value></member></struct></value></param></params></methodCall>", req)
+	err := xml2RPC("<methodCall><params><param><value><struct><member><name>string1</name><value><string>I'm a first string</string></value></member><member><name>string2</name><value><string>I'm a second string</string></value></member><member><name>id</name><value><int>1</int></value></member></struct></value></param></params></methodCall>", req)
 	if err != nil {
 		t.Error("XML2RPC conversion failed", err)
 	}
@@ -113,7 +113,7 @@ Requiredattribute'user'notfound:
 [{'User',"gggg"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
 `
 
-	err := XML2RPC(data, req)
+	err := xml2RPC(data, req)
 
 	fault, ok := err.(Fault)
 	if !ok {
@@ -140,7 +140,7 @@ Requiredattribute'user'notfound:
 [{'User',"Öñä"},{'Host',"sss.com"},{'Password',"ssddfsdf"}]
 `
 
-	err := XML2RPC(data, req)
+	err := xml2RPC(data, req)
 
 	fault, ok := err.(Fault)
 	if !ok {

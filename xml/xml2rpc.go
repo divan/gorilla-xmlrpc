@@ -20,19 +20,19 @@ import (
 )
 
 // Types used for unmarshalling
-type Response struct {
+type response struct {
 	Name   xml.Name   `xml:"methodResponse"`
-	Params []Param    `xml:"params>param"`
-	Fault  FaultValue `xml:"fault,omitempty"`
+	Params []param    `xml:"params>param"`
+	Fault  faultValue `xml:"fault,omitempty"`
 }
 
-type Param struct {
-	Value Value `xml:"value"`
+type param struct {
+	Value value `xml:"value"`
 }
 
-type Value struct {
-	Array    []Value  `xml:"array>data>value"`
-	Struct   []Member `xml:"struct>member"`
+type value struct {
+	Array    []value  `xml:"array>data>value"`
+	Struct   []member `xml:"struct>member"`
 	String   string   `xml:"string"`
 	Int      string   `xml:"int"`
 	Int4     string   `xml:"i4"`
@@ -43,14 +43,14 @@ type Value struct {
 	Raw      string   `xml:",innerxml"` // the value can be defualt string
 }
 
-type Member struct {
+type member struct {
 	Name  string `xml:"name"`
-	Value Value  `xml:"value"`
+	Value value  `xml:"value"`
 }
 
-func XML2RPC(xmlraw string, rpc interface{}) error {
+func xml2RPC(xmlraw string, rpc interface{}) error {
 	// Unmarshal raw XML into the temporal structure
-	var ret Response
+	var ret response
 	decoder := xml.NewDecoder(bytes.NewReader([]byte(xmlraw)))
 	decoder.CharsetReader = charset.NewReader
 	err := decoder.Decode(&ret)
@@ -71,7 +71,7 @@ func XML2RPC(xmlraw string, rpc interface{}) error {
 	// passed rpc variable, according to it's structure
 	for i, param := range ret.Params {
 		field := reflect.ValueOf(rpc).Elem().Field(i)
-		err = Value2Field(param.Value, &field)
+		err = value2Field(param.Value, &field)
 		if err != nil {
 			return err
 		}
@@ -80,8 +80,8 @@ func XML2RPC(xmlraw string, rpc interface{}) error {
 	return nil
 }
 
-// getFaultResponse converts FaultValue to Fault.
-func getFaultResponse(fault FaultValue) Fault {
+// getFaultResponse converts faultValue to Fault.
+func getFaultResponse(fault faultValue) Fault {
 	var (
 		code int
 		str  string
@@ -101,7 +101,7 @@ func getFaultResponse(fault FaultValue) Fault {
 	return Fault{Code: code, String: str}
 }
 
-func Value2Field(value Value, field *reflect.Value) error {
+func value2Field(value value, field *reflect.Value) error {
 	if !field.CanSet() {
 		return FaultApplicationError
 	}
@@ -121,11 +121,11 @@ func Value2Field(value Value, field *reflect.Value) error {
 	case value.String != "":
 		val = value.String
 	case value.Boolean != "":
-		val = XML2Bool(value.Boolean)
+		val = xml2Bool(value.Boolean)
 	case value.DateTime != "":
-		val, err = XML2DateTime(value.DateTime)
+		val, err = xml2DateTime(value.DateTime)
 	case value.Base64 != "":
-		val, err = XML2Base64(value.Base64)
+		val, err = xml2Base64(value.Base64)
 	case len(value.Struct) != 0:
 		if field.Kind() != reflect.Struct {
 			fault := FaultInvalidParams
@@ -138,7 +138,7 @@ func Value2Field(value Value, field *reflect.Value) error {
 			// methods in lowercase, which cannot be used
 			field_name := uppercaseFirst(s[i].Name)
 			f := field.FieldByName(field_name)
-			err = Value2Field(s[i].Value, &f)
+			err = value2Field(s[i].Value, &f)
 		}
 	case len(value.Array) != 0:
 		a := value.Array
@@ -147,7 +147,7 @@ func Value2Field(value Value, field *reflect.Value) error {
 			len(a), len(a))
 		for i := 0; i < len(a); i++ {
 			item := slice.Index(i)
-			err = Value2Field(a[i], &item)
+			err = value2Field(a[i], &item)
 		}
 		f = reflect.AppendSlice(f, slice)
 		val = f.Interface()
@@ -175,7 +175,7 @@ func Value2Field(value Value, field *reflect.Value) error {
 	return err
 }
 
-func XML2Bool(value string) bool {
+func xml2Bool(value string) bool {
 	var b bool
 	switch value {
 	case "1", "true", "TRUE", "True":
@@ -186,7 +186,7 @@ func XML2Bool(value string) bool {
 	return b
 }
 
-func XML2DateTime(value string) (time.Time, error) {
+func xml2DateTime(value string) (time.Time, error) {
 	var (
 		year, month, day     int
 		hour, minute, second int
@@ -198,7 +198,7 @@ func XML2DateTime(value string) (time.Time, error) {
 	return t, err
 }
 
-func XML2Base64(value string) ([]byte, error) {
+func xml2Base64(value string) ([]byte, error) {
 	return base64.StdEncoding.DecodeString(value)
 }
 

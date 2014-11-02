@@ -129,7 +129,7 @@ func execute(t *testing.T, s *rpc.Server, method string, req, res interface{}) e
 
 func TestRPC2XMLConverter(t *testing.T) {
 	req := &Service1Request{4, 2}
-	xml, err := RPCRequest2XML("Some.Method", req)
+	xml, err := rpcRequest2XML("Some.Method", req)
 	if err != nil {
 		t.Error("RPC2XML conversion failed", err)
 	}
@@ -142,7 +142,7 @@ func TestRPC2XMLConverter(t *testing.T) {
 	}
 
 	req2 := &Service2Request{"Johnny", 33, true}
-	xml, err = RPCRequest2XML("Some.Method", req2)
+	xml, err = rpcRequest2XML("Some.Method", req2)
 	if err != nil {
 		t.Error("RPC2XML conversion failed", err)
 	}
@@ -157,7 +157,7 @@ func TestRPC2XMLConverter(t *testing.T) {
 	address := Address{221, "Baker str.", "London"}
 	person := Person{"Johnny", "Doe", 33, address}
 	req3 := &Service3Request{person}
-	xml, err = RPCRequest2XML("Some.Method", req3)
+	xml, err = rpcRequest2XML("Some.Method", req3)
 	if err != nil {
 		t.Error("RPC2XML conversion failed", err)
 	}
@@ -170,7 +170,7 @@ func TestRPC2XMLConverter(t *testing.T) {
 	}
 
 	res := &Service1Response{42}
-	xml, err = RPCResponse2XML(res)
+	xml, err = rpcResponse2XML(res)
 	if err != nil {
 		t.Error("RPC2XML conversion failed", err)
 	}

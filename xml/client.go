@@ -11,7 +11,7 @@ import (
 
 // EncodeClientRequest encodes parameters for a XML-RPC client request.
 func EncodeClientRequest(method string, args interface{}) ([]byte, error) {
-	xml, err := RPCRequest2XML(method, args)
+	xml, err := rpcRequest2XML(method, args)
 	return []byte(xml), err
 }
 
@@ -22,5 +22,5 @@ func DecodeClientResponse(r io.Reader, reply interface{}) error {
 	if err != nil {
 		return FaultSystemError
 	}
-	return XML2RPC(string(rawxml), reply)
+	return xml2RPC(string(rawxml), reply)
 }

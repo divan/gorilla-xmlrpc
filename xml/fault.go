@@ -32,22 +32,21 @@ func (f Fault) Error() string {
 }
 
 // Fault2XML is a quick 'marshalling' replacemnt for the Fault case.
-func Fault2XML(fault Fault) string {
+func fault2XML(fault Fault) string {
 	buffer := "<methodResponse><fault>"
-	xml, _ := RPC2XML(fault)
+	xml, _ := rpc2XML(fault)
 	buffer += xml
 	buffer += "</fault></methodResponse>"
 	return buffer
 }
 
-// FaultValue represent Fault node in methodResponse with fault.
-type FaultValue struct {
-	Value Value `xml:"value"`
+type faultValue struct {
+	Value value `xml:"value"`
 }
 
-// IsEmpty returns true if FaultValue contain fault.
+// IsEmpty returns true if faultValue contain fault.
 //
-// FaultValue should be a struct with 2 members.
-func (f FaultValue) IsEmpty() bool {
+// faultValue should be a struct with 2 members.
+func (f faultValue) IsEmpty() bool {
 	return len(f.Value.Struct) == 0
 }
