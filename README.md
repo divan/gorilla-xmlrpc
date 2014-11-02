@@ -2,7 +2,7 @@
 
 [![Build Status](https://drone.io/github.com/divan/gorilla-xmlrpc/status.png)](https://drone.io/github.com/divan/gorilla-xmlrpc/latest)
 
-This is an XML-RPC protocol implementation for the Gorilla/RPC toolkit.
+XML-RPC implementation for the Gorilla/RPC toolkit.
 
 It's built on top of gorilla/rpc package in Go(Golang) language and implements XML-RPC, according to [it's specification](http://xmlrpc.scripting.com/spec.html).
 Unlike net/rpc from Go strlib, gorilla/rpc allows usage of HTTP POST requests for RPC.
