@@ -1,4 +1,4 @@
-package main
+package xml
 
 import (
     "log"
@@ -20,7 +20,7 @@ func XmlRpcCall(method string, args struct{Who string}) (reply struct{Message st
     return
 }
 
-func main() {
+func Example_client() {
     reply, err := XmlRpcCall("HelloService.Say", struct{Who string}{"User 1"})
     if err != nil {
         log.Fatal(err)

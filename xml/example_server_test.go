@@ -1,8 +1,9 @@
-package main
+package xml
 
 import (
     "log"
     "net/http"
+	"testing"
     "github.com/gorilla/rpc"
     "github.com/divan/gorilla-xmlrpc/xml"
 )
@@ -15,7 +16,7 @@ func (h *HelloService) Say(r *http.Request, args *struct{Who string}, reply *str
     return nil
 }
 
-func main() {
+func Example_server() {
     RPC := rpc.NewServer()
     xmlrpcCodec := xml.NewCodec()
     RPC.RegisterCodec(xmlrpcCodec, "text/xml")
