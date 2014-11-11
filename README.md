@@ -5,6 +5,8 @@
 
 XML-RPC implementation for the Gorilla/RPC toolkit.
 
+It implements both server and client.
+
 It's built on top of gorilla/rpc package in Go(Golang) language and implements XML-RPC, according to [it's specification](http://xmlrpc.scripting.com/spec.html).
 Unlike net/rpc from Go strlib, gorilla/rpc allows usage of HTTP POST requests for RPC.
 
