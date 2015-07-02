@@ -72,6 +72,8 @@ func rpc2XML(value interface{}) (string, error) {
 		if reflect.ValueOf(value).IsNil() {
 			out += "<nil/>"
 		}
+	case reflect.Map:
+		out += map2XML(value)
 	}
 	out += "</value>"
 	return out, nil
@@ -112,6 +114,24 @@ func struct2XML(value interface{}) (out string) {
 	}
 	out += "</struct>"
 	return
+}
+
+func map2XML(value interface{}) string {
+
+	val := reflect.ValueOf(value)
+
+	out += "<struct>"
+
+	for _, v := range val.MapKeys() {
+
+		field_name := v.String()
+		field_value, _ := rpc2XML(val.MapIndex(v).String())
+
+		out += fmt.Sprintf("<member><name>%s</name>%s</member>", field_name, field_value)
+	}
+
+	out += "</struct>"
+	return out
 }
 
 func array2XML(value interface{}) (out string) {
