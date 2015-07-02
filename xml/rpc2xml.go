@@ -120,7 +120,7 @@ func map2XML(value interface{}) string {
 
 	val := reflect.ValueOf(value)
 
-	out += "<struct>"
+	out := "<struct>"
 
 	for _, v := range val.MapKeys() {
 
