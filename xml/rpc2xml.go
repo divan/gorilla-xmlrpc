@@ -33,15 +33,29 @@ func rpcResponse2XML(out io.Writer, rpc interface{}) error {
 
 func rpcParams2XML(out io.Writer, rpc interface{}) error {
 	_, err := io.WriteString(out, "<params>")
-	for i := 0; i < reflect.ValueOf(rpc).Elem().NumField(); i++ {
-		io.WriteString(out, "<param>")
-		err = rpc2XML(out, reflect.ValueOf(rpc).Elem().Field(i).Interface())
-		if err != nil {
-			break
-		}
-		_, err = io.WriteString(out, "</param>")
+	if err != nil {
+		return err
 	}
-	_, err = io.WriteString(out, "</params>")
+	if m, ok := rpc.(map[string]interface{}); ok {
+		for k, v := range m {
+			fmt.Fprintf(out, "<param><name>%s</name>", k)
+			err = rpc2XML(out, v)
+			io.WriteString(out, "</parm>")
+			if err != nil {
+				break
+			}
+		}
+	} else {
+		for i := 0; i < reflect.ValueOf(rpc).Elem().NumField(); i++ {
+			io.WriteString(out, "<param>")
+			err = rpc2XML(out, reflect.ValueOf(rpc).Elem().Field(i).Interface())
+			io.WriteString(out, "</param>")
+			if err != nil {
+				break
+			}
+		}
+	}
+	_, _ = io.WriteString(out, "</params>")
 	return err
 }
 
