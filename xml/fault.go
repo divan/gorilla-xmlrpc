@@ -6,6 +6,7 @@ package xml
 
 import (
 	"fmt"
+	"io"
 )
 
 // Default Faults
@@ -31,13 +32,14 @@ func (f Fault) Error() string {
 	return fmt.Sprintf("%d: %s", f.Code, f.String)
 }
 
-// Fault2XML is a quick 'marshalling' replacemnt for the Fault case.
-func fault2XML(fault Fault) string {
-	buffer := "<methodResponse><fault>"
-	xml, _ := rpc2XML(fault)
-	buffer += xml
-	buffer += "</fault></methodResponse>"
-	return buffer
+// Fault2XML is a quick 'marshalling' replacement for the Fault case.
+func fault2XML(w io.Writer, fault Fault) error {
+	_, err := io.WriteString(w, "<methodResponse><fault>")
+	if err = rpc2XML(w, fault); err != nil {
+		return err
+	}
+	_, err = io.WriteString(w, "</fault></methodResponse>")
+	return err
 }
 
 type faultValue struct {

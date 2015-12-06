@@ -5,10 +5,10 @@
 package xml
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"reflect"
 	"strconv"
 	"time"
@@ -48,10 +48,10 @@ type member struct {
 	Value value  `xml:"value"`
 }
 
-func xml2RPC(xmlraw string, rpc interface{}) error {
+func xml2RPC(r io.Reader, rpc interface{}) error {
 	// Unmarshal raw XML into the temporal structure
 	var ret response
-	decoder := xml.NewDecoder(bytes.NewReader([]byte(xmlraw)))
+	decoder := xml.NewDecoder(r)
 	decoder.CharsetReader = charset.NewReader
 	err := decoder.Decode(&ret)
 	if err != nil {
