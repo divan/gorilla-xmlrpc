@@ -9,7 +9,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"log"
 	"reflect"
 	"strconv"
 	"time"
@@ -65,7 +64,6 @@ func xml2RPC(r io.Reader, rpc interface{}) error {
 
 	if len(ret.Params) == 1 {
 		if m, ok := rpc.(map[string]interface{}); ok {
-			log.Printf("rpc=%T ret=%#v", rpc, ret.Params[0].Value.Struct)
 			for _, member := range ret.Params[0].Value.Struct {
 				var field interface{}
 				rv := reflect.ValueOf(&field)
