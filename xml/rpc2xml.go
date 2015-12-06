@@ -37,14 +37,16 @@ func rpcParams2XML(out io.Writer, rpc interface{}) error {
 		return err
 	}
 	if m, ok := rpc.(map[string]interface{}); ok {
+		io.WriteString(out, "<struct>")
 		for k, v := range m {
 			fmt.Fprintf(out, "<param><name>%s</name>", k)
 			err = rpc2XML(out, v)
-			io.WriteString(out, "</parm>")
+			io.WriteString(out, "</param>")
 			if err != nil {
 				break
 			}
 		}
+		io.WriteString(out, "</struct>")
 	} else {
 		for i := 0; i < reflect.ValueOf(rpc).Elem().NumField(); i++ {
 			io.WriteString(out, "<param>")
