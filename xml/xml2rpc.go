@@ -15,6 +15,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"gopkg.in/errgo.v1"
+
 	"golang.org/x/net/html/charset"
 )
 
@@ -118,7 +120,7 @@ func getFaultResponse(fault faultValue) Fault {
 
 func value2Field(value value, field *reflect.Value) error {
 	if !field.CanSet() {
-		return FaultApplicationError
+		return errgo.Notef(FaultApplicationError, "%#v [%T] is not setable", field, field)
 	}
 
 	var (
@@ -142,9 +144,24 @@ func value2Field(value value, field *reflect.Value) error {
 	case value.Base64 != "":
 		val, err = xml2Base64(value.Base64)
 	case len(value.Struct) != 0:
+		if field.Kind() == reflect.Map {
+			if field.IsNil() {
+				field.Set(reflect.MakeMap(field.Type()))
+			}
+			for _, s := range value.Struct {
+				var i interface{}
+				rv := reflect.ValueOf(&i)
+				rve := rv.Elem()
+				if err = value2Field(s.Value, &rve); err != nil {
+					return errgo.Notef(err, "fetch %v:%#v into %#v", s.Name, s.Value, rv)
+				}
+				field.SetMapIndex(reflect.ValueOf(s.Name), rve)
+			}
+			return err
+		}
 		if field.Kind() != reflect.Struct {
 			fault := FaultInvalidParams
-			fault.String += fmt.Sprintf("structure fields mismatch: %s != %s", field.Kind(), reflect.Struct.String())
+			fault.String += fmt.Sprintf(": structure fields mismatch: %s != %s", field.Kind(), reflect.Struct.String())
 			return fault
 		}
 		s := value.Struct
@@ -176,11 +193,10 @@ func value2Field(value value, field *reflect.Value) error {
 	}
 
 	if val != nil {
-		if reflect.TypeOf(val) != reflect.TypeOf(field.Interface()) {
+		rv := reflect.ValueOf(val)
+		if !rv.Type().AssignableTo(field.Type()) {
 			fault := FaultInvalidParams
-			fault.String += fmt.Sprintf(": fields type mismatch: %s != %s",
-				reflect.TypeOf(val),
-				reflect.TypeOf(field.Interface()))
+			fault.String += fmt.Sprintf(": fields type mismatch: %s != %s", reflect.TypeOf(val), field.Type())
 			return fault
 		}
 

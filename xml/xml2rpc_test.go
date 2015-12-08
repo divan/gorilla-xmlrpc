@@ -155,3 +155,22 @@ Requiredattribute'user'notfound:
 		}
 	}
 }
+
+func TestXML2RPCStruct(t *testing.T) {
+	type StructAndMap struct {
+		Param map[string]interface{}
+	}
+	req := StructAndMap{make(map[string]interface{}, 4)}
+	data := `<?xml version='1.0'?>
+<methodResponse>
+<params>
+<param>
+<value><struct><member><name>p_hiba_kod</name><value><int>2</int></value>
+</member><member><name>p_torzsszam</name><string></string></member><member><name>p_hiba_szov</name><string>bejelentkezés felfüggesztve</string></member><member><name>p_bazon</name><string></string></member></struct></value></param>
+</params>
+</methodResponse>`
+	err := xml2RPC(strings.NewReader(data), &req)
+	if err != nil {
+		t.Error(err)
+	}
+}
