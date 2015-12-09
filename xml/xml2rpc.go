@@ -157,7 +157,7 @@ func value2Field(value value, field *reflect.Value) error {
 				}
 				field.SetMapIndex(reflect.ValueOf(s.Name), rve)
 			}
-			return err
+			return nil
 		}
 		if field.Kind() != reflect.Struct {
 			fault := FaultInvalidParams
@@ -175,14 +175,23 @@ func value2Field(value value, field *reflect.Value) error {
 	case len(value.Array) != 0:
 		a := value.Array
 		f := *field
-		slice := reflect.MakeSlice(reflect.TypeOf(f.Interface()),
-			len(a), len(a))
-		for i := 0; i < len(a); i++ {
-			item := slice.Index(i)
-			err = value2Field(a[i], &item)
+		if f.Type().String() == "interface {}" {
+			slice := make([]interface{}, len(a))
+			for i := range a {
+				rve := reflect.ValueOf(&slice[i]).Elem()
+				err = value2Field(a[i], &rve)
+			}
+			val = slice
+		} else {
+			slice := reflect.MakeSlice(f.Type(), //reflect.TypeOf(f.Interface()),
+				len(a), len(a))
+			for i := 0; i < len(a); i++ {
+				item := slice.Index(i)
+				err = value2Field(a[i], &item)
+			}
+			f = reflect.AppendSlice(f, slice)
+			val = f.Interface()
 		}
-		f = reflect.AppendSlice(f, slice)
-		val = f.Interface()
 
 	default:
 		// value field is default to string, see http://en.wikipedia.org/wiki/XML-RPC#Data_types
