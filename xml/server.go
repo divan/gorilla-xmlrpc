@@ -19,16 +19,24 @@ import (
 
 // NewCodec returns a new XML-RPC Codec.
 func NewCodec() *Codec {
-	return &Codec{}
+	return &Codec{
+		aliases: make(map[string]string),
+	}
 }
 
 // Codec creates a CodecRequest to process each request.
 type Codec struct {
+	aliases map[string]string
+}
+
+// RegisterAlias creates a method alias
+func (c *Codec) RegisterAlias(alias, method string) {
+	c.aliases[alias] = method
 }
 
 // NewRequest returns a CodecRequest.
 func (c *Codec) NewRequest(r *http.Request) rpc.CodecRequest {
-	return newCodecRequest(r)
+	return c.newCodecRequest(r)
 }
 
 // ----------------------------------------------------------------------------
@@ -47,11 +55,15 @@ type CodecRequest struct {
 	err     error
 }
 
-func newCodecRequest(r *http.Request) rpc.CodecRequest {
+func (c *Codec) newCodecRequest(r *http.Request) rpc.CodecRequest {
 	rawxml, err := ioutil.ReadAll(r.Body)
 	var request ServerRequest
 	err = xml.Unmarshal(rawxml, &request)
 	request.rawxml = string(rawxml)
+
+	if method, ok := c.aliases[request.Method]; ok {
+		request.Method = method
+	}
 
 	r.Body.Close()
 	return &CodecRequest{request: &request, err: err}
