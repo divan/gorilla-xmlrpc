@@ -116,9 +116,10 @@ func execute(t *testing.T, s *rpc.Server, method string, req, res interface{}) e
 		t.Fatal("Expected to be registered:", method)
 	}
 
-	buf, _ := EncodeClientRequest(method, req)
-	body := bytes.NewBuffer(buf)
-	r, _ := http.NewRequest("POST", "http://localhost:8080/", body)
+	buf := bufPool.Get()
+	defer bufPool.Put(buf)
+	_ = EncodeClientRequest(buf, method, req)
+	r, _ := http.NewRequest("POST", "http://localhost:8080/", bytes.NewReader(buf.Bytes()))
 	r.Header.Set("Content-Type", "text/xml")
 
 	w := httptest.NewRecorder()
@@ -129,26 +130,29 @@ func execute(t *testing.T, s *rpc.Server, method string, req, res interface{}) e
 
 func TestRPC2XMLConverter(t *testing.T) {
 	req := &Service1Request{4, 2}
-	xml, err := rpcRequest2XML("Some.Method", req)
+	buf := bufPool.Get()
+	defer bufPool.Put(buf)
+	err := rpcRequest2XML(buf, "Some.Method", req)
 	if err != nil {
 		t.Error("RPC2XML conversion failed", err)
 	}
 
 	expected := "<methodCall><methodName>Some.Method</methodName><params><param><value><int>4</int></value></param><param><value><int>2</int></value></param></params></methodCall>"
-	if xml != expected {
+	if xml := buf.String(); xml != expected {
 		t.Error("RPC2XML conversion failed")
 		t.Error("Expected", expected)
 		t.Error("Got", xml)
 	}
 
 	req2 := &Service2Request{"Johnny", 33, true}
-	xml, err = rpcRequest2XML("Some.Method", req2)
+	buf.Reset()
+	err = rpcRequest2XML(buf, "Some.Method", req2)
 	if err != nil {
 		t.Error("RPC2XML conversion failed", err)
 	}
 
 	expected = "<methodCall><methodName>Some.Method</methodName><params><param><value><string>Johnny</string></value></param><param><value><int>33</int></value></param><param><value><boolean>1</boolean></value></param></params></methodCall>"
-	if xml != expected {
+	if xml := buf.String(); xml != expected {
 		t.Error("RPC2XML conversion failed")
 		t.Error("Expected", expected)
 		t.Error("Got", xml)
@@ -157,26 +161,28 @@ func TestRPC2XMLConverter(t *testing.T) {
 	address := Address{221, "Baker str.", "London"}
 	person := Person{"Johnny", "Doe", 33, address}
 	req3 := &Service3Request{person}
-	xml, err = rpcRequest2XML("Some.Method", req3)
+	buf.Reset()
+	err = rpcRequest2XML(buf, "Some.Method", req3)
 	if err != nil {
 		t.Error("RPC2XML conversion failed", err)
 	}
 
 	expected = "<methodCall><methodName>Some.Method</methodName><params><param><value><struct><member><name>Name</name><value><string>Johnny</string></value></member><member><name>Surname</name><value><string>Doe</string></value></member><member><name>Age</name><value><int>33</int></value></member><member><name>Address</name><value><struct><member><name>Number</name><value><int>221</int></value></member><member><name>Street</name><value><string>Baker str.</string></value></member><member><name>Country</name><value><string>London</string></value></member></struct></value></member></struct></value></param></params></methodCall>"
-	if xml != expected {
+	if xml := buf.String(); xml != expected {
 		t.Error("RPC2XML conversion failed")
 		t.Error("Expected", expected)
 		t.Error("Got", xml)
 	}
 
 	res := &Service1Response{42}
-	xml, err = rpcResponse2XML(res)
+	buf.Reset()
+	err = rpcResponse2XML(buf, res)
 	if err != nil {
 		t.Error("RPC2XML conversion failed", err)
 	}
 
 	expected = "<methodResponse><params><param><value><int>42</int></value></param></params></methodResponse>"
-	if xml != expected {
+	if xml := buf.String(); xml != expected {
 		t.Error("RPC2XML conversion failed")
 		t.Error("Expected", expected)
 		t.Error("Got", xml)
