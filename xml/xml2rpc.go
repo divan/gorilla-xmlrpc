@@ -5,18 +5,19 @@
 package xml
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"reflect"
 	"strconv"
 	"time"
 	"unicode"
 	"unicode/utf8"
 
-	"code.google.com/p/go-charset/charset"
-	_ "code.google.com/p/go-charset/data"
+	"gopkg.in/errgo.v1"
+
+	"golang.org/x/net/html/charset"
 )
 
 // Types used for unmarshalling
@@ -48,11 +49,13 @@ type member struct {
 	Value value  `xml:"value"`
 }
 
-func xml2RPC(xmlraw string, rpc interface{}) error {
+func xml2RPC(r io.Reader, rpc interface{}) error {
 	// Unmarshal raw XML into the temporal structure
 	var ret response
-	decoder := xml.NewDecoder(bytes.NewReader([]byte(xmlraw)))
-	decoder.CharsetReader = charset.NewReader
+	decoder := xml.NewDecoder(r)
+	decoder.CharsetReader = func(enc string, r io.Reader) (io.Reader, error) {
+		return charset.NewReader(r, enc)
+	}
 	err := decoder.Decode(&ret)
 	if err != nil {
 		return FaultDecode
@@ -103,7 +106,7 @@ func getFaultResponse(fault faultValue) Fault {
 
 func value2Field(value value, field *reflect.Value) error {
 	if !field.CanSet() {
-		return FaultApplicationError
+		return errgo.Notef(FaultApplicationError, "%#v [%T] is not setable", field, field)
 	}
 
 	var (
@@ -129,7 +132,7 @@ func value2Field(value value, field *reflect.Value) error {
 	case len(value.Struct) != 0:
 		if field.Kind() != reflect.Struct {
 			fault := FaultInvalidParams
-			fault.String += fmt.Sprintf("structure fields mismatch: %s != %s", field.Kind(), reflect.Struct.String())
+			fault.String += fmt.Sprintf(": structure fields mismatch: %s != %s", field.Kind(), reflect.Struct.String())
 			return fault
 		}
 		s := value.Struct
@@ -143,7 +146,7 @@ func value2Field(value value, field *reflect.Value) error {
 	case len(value.Array) != 0:
 		a := value.Array
 		f := *field
-		slice := reflect.MakeSlice(reflect.TypeOf(f.Interface()),
+		slice := reflect.MakeSlice(f.Type(), //reflect.TypeOf(f.Interface()),
 			len(a), len(a))
 		for i := 0; i < len(a); i++ {
 			item := slice.Index(i)
@@ -161,11 +164,10 @@ func value2Field(value value, field *reflect.Value) error {
 	}
 
 	if val != nil {
-		if reflect.TypeOf(val) != reflect.TypeOf(field.Interface()) {
+		rv := reflect.ValueOf(val)
+		if !rv.Type().AssignableTo(field.Type()) {
 			fault := FaultInvalidParams
-			fault.String += fmt.Sprintf(": fields type mismatch: %s != %s",
-				reflect.TypeOf(val),
-				reflect.TypeOf(field.Interface()))
+			fault.String += fmt.Sprintf(": fields type mismatch: %s != %s", reflect.TypeOf(val), field.Type())
 			return fault
 		}
 

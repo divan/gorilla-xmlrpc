@@ -7,96 +7,118 @@ package xml
 import (
 	"encoding/base64"
 	"fmt"
+	"io"
 	"reflect"
 	"strings"
 	"time"
 )
 
-func rpcRequest2XML(method string, rpc interface{}) (string, error) {
-	buffer := "<methodCall><methodName>"
-	buffer += method
-	buffer += "</methodName>"
-	params, err := rpcParams2XML(rpc)
-	buffer += params
-	buffer += "</methodCall>"
-	return buffer, err
-}
-
-func rpcResponse2XML(rpc interface{}) (string, error) {
-	buffer := "<methodResponse>"
-	params, err := rpcParams2XML(rpc)
-	buffer += params
-	buffer += "</methodResponse>"
-	return buffer, err
-}
-
-func rpcParams2XML(rpc interface{}) (string, error) {
-	var err error
-	buffer := "<params>"
-	for i := 0; i < reflect.ValueOf(rpc).Elem().NumField(); i++ {
-		var xml string
-		buffer += "<param>"
-		xml, err = rpc2XML(reflect.ValueOf(rpc).Elem().Field(i).Interface())
-		buffer += xml
-		buffer += "</param>"
+func rpcRequest2XML(w io.Writer, method string, rpc interface{}) error {
+	ew := NewErrWriter(w)
+	fmt.Fprintf(ew, "<methodCall><methodName>%s</methodName>", method)
+	err := rpcParams2XML(ew, rpc)
+	io.WriteString(ew, "</methodCall>")
+	if err != nil {
+		return err
 	}
-	buffer += "</params>"
-	return buffer, err
+	return ew.Err()
 }
 
-func rpc2XML(value interface{}) (string, error) {
-	out := "<value>"
+func rpcResponse2XML(w io.Writer, rpc interface{}) error {
+	ew := NewErrWriter(w)
+	io.WriteString(ew, "<methodResponse>")
+	err := rpcParams2XML(ew, rpc)
+	io.WriteString(ew, "</methodResponse>")
+	if err != nil {
+		return err
+	}
+	return ew.Err()
+}
+
+func rpcParams2XML(w io.Writer, rpc interface{}) error {
+	ew := NewErrWriter(w)
+	io.WriteString(ew, "<params>")
+	var err error
+	for i := 0; i < reflect.ValueOf(rpc).Elem().NumField(); i++ {
+		io.WriteString(ew, "<param>")
+		err = rpc2XML(ew, reflect.ValueOf(rpc).Elem().Field(i).Interface())
+		io.WriteString(ew, "</param>")
+		if err != nil {
+			break
+		}
+	}
+	io.WriteString(ew, "</params>")
+	if err != nil {
+		return err
+	}
+	return ew.Err()
+}
+
+func rpc2XML(w io.Writer, value interface{}) error {
+	ew := NewErrWriter(w)
+	io.WriteString(ew, "<value>")
+	var err error
 	switch reflect.ValueOf(value).Kind() {
 	case reflect.Int:
-		out += fmt.Sprintf("<int>%d</int>", value.(int))
+		fmt.Fprintf(ew, "<int>%d</int>", value.(int))
 	case reflect.Float64:
-		out += fmt.Sprintf("<double>%f</double>", value.(float64))
+		fmt.Fprintf(ew, "<double>%f</double>", value.(float64))
 	case reflect.String:
-		out += string2XML(value.(string))
+		err = string2XML(ew, value.(string))
 	case reflect.Bool:
-		out += bool2XML(value.(bool))
+		err = bool2XML(ew, value.(bool))
 	case reflect.Struct:
 		if reflect.TypeOf(value).String() != "time.Time" {
-			out += struct2XML(value)
+			err = struct2XML(ew, value)
 		} else {
-			out += time2XML(value.(time.Time))
+			err = time2XML(ew, value.(time.Time))
 		}
 	case reflect.Slice, reflect.Array:
 		// FIXME: is it the best way to recognize '[]byte'?
 		if reflect.TypeOf(value).String() != "[]uint8" {
-			out += array2XML(value)
+			err = array2XML(ew, value)
 		} else {
-			out += base642XML(value.([]byte))
+			err = base642XML(ew, value.([]byte))
 		}
 	case reflect.Ptr:
 		if reflect.ValueOf(value).IsNil() {
-			out += "<nil/>"
+			io.WriteString(ew, "<nil/>")
 		}
 	}
-	out += "</value>"
-	return out, nil
+	io.WriteString(ew, "</value>")
+	if err != nil {
+		return err
+	}
+	return ew.Err()
 }
 
-func bool2XML(value bool) string {
+func bool2XML(w io.Writer, value bool) error {
 	var b string
 	if value {
 		b = "1"
 	} else {
 		b = "0"
 	}
-	return fmt.Sprintf("<boolean>%s</boolean>", b)
+	_, err := fmt.Fprintf(w, "<boolean>%s</boolean>", b)
+	return err
 }
 
-func string2XML(value string) string {
-	value = strings.Replace(value, "&", "&amp;", -1)
-	value = strings.Replace(value, "\"", "&quot;", -1)
-	value = strings.Replace(value, "<", "&lt;", -1)
-	value = strings.Replace(value, ">", "&gt;", -1)
-	return fmt.Sprintf("<string>%s</string>", value)
+var strRepl = strings.NewReplacer(
+	"&", "&amp;",
+	`"`, "&quot;",
+	"<", "&lt;",
+	">", "&gt;",
+)
+
+func string2XML(w io.Writer, value string) error {
+	_, err := fmt.Fprintf(w, "<string>%s</string>", strRepl.Replace(value))
+	return err
 }
 
-func struct2XML(value interface{}) (out string) {
-	out += "<struct>"
+func struct2XML(w io.Writer, value interface{}) error {
+	ew := NewErrWriter(w)
+	io.WriteString(ew, "<struct>")
+	var err error
 	for i := 0; i < reflect.TypeOf(value).NumField(); i++ {
 		field := reflect.ValueOf(value).Field(i)
 		field_type := reflect.TypeOf(value).Field(i)
@@ -106,25 +128,37 @@ func struct2XML(value interface{}) (out string) {
 		} else {
 			name = field_type.Name
 		}
-		field_value, _ := rpc2XML(field.Interface())
-		field_name := fmt.Sprintf("<name>%s</name>", name)
-		out += fmt.Sprintf("<member>%s%s</member>", field_name, field_value)
+		fmt.Fprintf(ew, "<member><name>%s</name>", name)
+		err = rpc2XML(ew, field.Interface())
+		io.WriteString(ew, "</member>")
+		if err != nil {
+			break
+		}
 	}
-	out += "</struct>"
-	return
+	io.WriteString(ew, "</struct>")
+	if err != nil {
+		return err
+	}
+	return ew.Err()
 }
 
-func array2XML(value interface{}) (out string) {
-	out += "<array><data>"
+func array2XML(w io.Writer, value interface{}) error {
+	ew := NewErrWriter(w)
+	io.WriteString(ew, "<array><data>")
+	var err error
 	for i := 0; i < reflect.ValueOf(value).Len(); i++ {
-		item_xml, _ := rpc2XML(reflect.ValueOf(value).Index(i).Interface())
-		out += item_xml
+		if err = rpc2XML(ew, reflect.ValueOf(value).Index(i).Interface()); err != nil {
+			break
+		}
 	}
-	out += "</data></array>"
-	return
+	io.WriteString(ew, "</data></array>")
+	if err != nil {
+		return err
+	}
+	return ew.Err()
 }
 
-func time2XML(t time.Time) string {
+func time2XML(w io.Writer, t time.Time) error {
 	/*
 		// TODO: find out whether we need to deal
 		// here with TZ
@@ -136,12 +170,51 @@ func time2XML(t time.Time) string {
 			tz = fmt.Sprintf("%03d00", offset / 3600 )
 		}
 	*/
-	return fmt.Sprintf("<dateTime.iso8601>%04d%02d%02dT%02d:%02d:%02d</dateTime.iso8601>",
+	_, err := fmt.Fprintf(w, "<dateTime.iso8601>%04d%02d%02dT%02d:%02d:%02d</dateTime.iso8601>",
 		t.Year(), t.Month(), t.Day(),
 		t.Hour(), t.Minute(), t.Second())
+	return err
 }
 
-func base642XML(data []byte) string {
-	str := base64.StdEncoding.EncodeToString(data)
-	return fmt.Sprintf("<base64>%s</base64>", str)
+func base642XML(w io.Writer, data []byte) error {
+	ew := NewErrWriter(w)
+	_, _ = io.WriteString(ew, "<base64>")
+	bw := base64.NewEncoder(base64.StdEncoding, ew)
+	bw.Write(data)
+	err := bw.Close()
+	io.WriteString(ew, "</base64>")
+	if err != nil {
+		return err
+	}
+	return ew.Err()
+}
+
+var _ = io.Writer((*errWriter)(nil))
+
+type errWriter struct {
+	w   io.Writer
+	err error
+}
+
+func NewErrWriter(w io.Writer) *errWriter {
+	if w == nil {
+		return nil
+	}
+	if ew, ok := w.(*errWriter); ok {
+		return ew
+	}
+	return &errWriter{w: w}
+}
+
+func (ew *errWriter) Write(p []byte) (int, error) {
+	if ew.err != nil {
+		return 0, ew.err
+	}
+	var n int
+	n, ew.err = ew.w.Write(p)
+	return n, ew.err
+}
+
+func (ew *errWriter) Err() error {
+	return ew.err
 }
