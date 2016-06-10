@@ -15,8 +15,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"gopkg.in/errgo.v1"
-
+	"github.com/pkg/errors"
 	"golang.org/x/net/html/charset"
 )
 
@@ -106,7 +105,7 @@ func getFaultResponse(fault faultValue) Fault {
 
 func value2Field(value value, field *reflect.Value) error {
 	if !field.CanSet() {
-		return errgo.Notef(FaultApplicationError, "%#v [%T] is not setable", field, field)
+		return errors.Wrapf(FaultApplicationError, "%#v [%T] is not setable", field, field)
 	}
 
 	var (

@@ -38,7 +38,21 @@ func (c *Codec) RegisterAlias(alias, method string) {
 
 // NewRequest returns a CodecRequest.
 func (c *Codec) NewRequest(r *http.Request) rpc.CodecRequest {
-	return c.newCodecRequest(r)
+	rawxml, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return &CodecRequest{err: err}
+	}
+	defer r.Body.Close()
+
+	var request ServerRequest
+	if err := xml.Unmarshal(rawxml, &request); err != nil {
+		return &CodecRequest{err: err}
+	}
+	request.rawxml = string(rawxml)
+	if method, ok := c.aliases[request.Method]; ok {
+		request.Method = method
+	}
+	return &CodecRequest{request: &request}
 }
 
 // ----------------------------------------------------------------------------
@@ -55,20 +69,6 @@ type ServerRequest struct {
 type CodecRequest struct {
 	request *ServerRequest
 	err     error
-}
-
-func (c *Codec) newCodecRequest(r *http.Request) rpc.CodecRequest {
-	rawxml, err := ioutil.ReadAll(r.Body)
-	var request ServerRequest
-	err = xml.Unmarshal(rawxml, &request)
-	request.rawxml = string(rawxml)
-
-	if method, ok := c.aliases[request.Method]; ok {
-		request.Method = method
-	}
-
-	r.Body.Close()
-	return &CodecRequest{request: &request, err: err}
 }
 
 // Method returns the RPC method for the current request.
