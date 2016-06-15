@@ -6,6 +6,7 @@ package xml
 
 import (
 	"encoding/base64"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"reflect"
@@ -39,12 +40,28 @@ func rpcParams2XML(w io.Writer, rpc interface{}) error {
 	ew := NewErrWriter(w)
 	io.WriteString(ew, "<params>")
 	var err error
-	for i := 0; i < reflect.ValueOf(rpc).Elem().NumField(); i++ {
-		io.WriteString(ew, "<param>")
-		err = rpc2XML(ew, reflect.ValueOf(rpc).Elem().Field(i).Interface())
-		io.WriteString(ew, "</param>")
-		if err != nil {
-			break
+	if m, ok := rpc.(map[string]interface{}); ok {
+		io.WriteString(w, "<struct>")
+		for k, v := range m {
+			fmt.Fprintf(w, "<param><name>")
+			xml.EscapeText(w, []byte(k))
+			fmt.Fprintf(w, "</name>")
+			err = rpc2XML(w, v)
+			io.WriteString(w, "</param>")
+			if err != nil {
+				break
+			}
+		}
+		io.WriteString(w, "</struct>")
+
+	} else {
+		for i := 0; i < reflect.ValueOf(rpc).Elem().NumField(); i++ {
+			io.WriteString(ew, "<param>")
+			err = rpc2XML(ew, reflect.ValueOf(rpc).Elem().Field(i).Interface())
+			io.WriteString(ew, "</param>")
+			if err != nil {
+				break
+			}
 		}
 	}
 	io.WriteString(ew, "</params>")
@@ -73,6 +90,19 @@ func rpc2XML(w io.Writer, value interface{}) error {
 		} else {
 			err = time2XML(ew, value.(time.Time))
 		}
+	case reflect.Map:
+		fmt.Fprintf(ew, "<struct>")
+		for k, v := range value.(map[string]interface{}) {
+			fmt.Fprintf(ew, "<member><name>")
+			xml.EscapeText(ew, []byte(k))
+			fmt.Fprintf(ew, "</name><value>")
+			err = rpc2XML(ew, v)
+			fmt.Fprintf(ew, "</member>")
+			if err != nil {
+				break
+			}
+		}
+		fmt.Fprintf(ew, "</struct>")
 	case reflect.Slice, reflect.Array:
 		// FIXME: is it the best way to recognize '[]byte'?
 		if reflect.TypeOf(value).String() != "[]uint8" {

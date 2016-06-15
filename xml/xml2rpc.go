@@ -64,18 +64,33 @@ func xml2RPC(r io.Reader, rpc interface{}) error {
 		return getFaultResponse(ret.Fault)
 	}
 
-	// Structures should have equal number of fields
-	if reflect.TypeOf(rpc).Elem().NumField() != len(ret.Params) {
-		return FaultWrongArgumentsNumber
-	}
+	if len(ret.Params) == 1 {
+		if m, ok := rpc.(map[string]interface{}); ok {
+			for _, member := range ret.Params[0].Value.Struct {
+				var field interface{}
+				rv := reflect.ValueOf(&field)
+				err = value2Field(member.Value, &rv)
+				m[member.Name] = rv.Interface()
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	} else {
+		// Structures should have equal number of fields
+		if reflect.TypeOf(rpc).Elem().NumField() != len(ret.Params) {
+			return FaultWrongArgumentsNumber
+		}
 
-	// Now, convert temporal structure into the
-	// passed rpc variable, according to it's structure
-	for i, param := range ret.Params {
-		field := reflect.ValueOf(rpc).Elem().Field(i)
-		err = value2Field(param.Value, &field)
-		if err != nil {
-			return err
+		// Now, convert temporal structure into the
+		// passed rpc variable, according to it's structure
+		for i, param := range ret.Params {
+			field := reflect.ValueOf(rpc).Elem().Field(i)
+			err = value2Field(param.Value, &field)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
