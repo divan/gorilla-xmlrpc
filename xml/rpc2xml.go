@@ -55,6 +55,17 @@ func rpc2XML(value interface{}) (string, error) {
 		out += string2XML(value.(string))
 	case reflect.Bool:
 		out += bool2XML(value.(bool))
+	case reflect.Map:
+		switch tmpMap := value.(type) {
+		case map[string]string:
+			for key, val := range tmpMap {
+				out += "<struct>"
+				field_value, _ := rpc2XML(val)
+				field_name := fmt.Sprintf("<name>%s</name>", key)
+				out += fmt.Sprintf("<member>%s%s</member>", field_name, field_value)
+				out += "</struct>"
+			}
+		}	
 	case reflect.Struct:
 		if reflect.TypeOf(value).String() != "time.Time" {
 			out += struct2XML(value)
