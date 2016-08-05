@@ -34,7 +34,7 @@ The following types are supported:
     dateTime.iso8601    time.Time
     base64              []byte
     struct              struct
-    struct	            map[string]string
+    struct	            map[string]interface{}
     array               []interface{}
     nil                 nil
 
