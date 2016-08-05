@@ -1,5 +1,5 @@
 /*
-XML-RPC implementation for the Gorilla/RPC toolkit.
+XML-RPC implementation for the Gorilla/RPC toolkit (jpcweb Fork).
 
 It's built on top of gorilla/rpc package in Go(Golang) language and implements XML-RPC, according to it's specification. Unlike net/rpc from Go strlib, gorilla/rpc allows usage of HTTP POST requests for RPC.
 
@@ -9,7 +9,7 @@ Installation
 
 Assuming you already imported gorilla/rpc, use the following command:
 
-    go get github.com/divan/gorilla-xmlrpc/xml
+    go get github.com/jpcweb/gorilla-xmlrpc/xml
 
 Implementation details
 
@@ -34,6 +34,7 @@ The following types are supported:
     dateTime.iso8601    time.Time
     base64              []byte
     struct              struct
+    struct	            map[string]string
     array               []interface{}
     nil                 nil
 
