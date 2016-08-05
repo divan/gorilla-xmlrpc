@@ -13,7 +13,7 @@ Unlike net/rpc from Go strlib, gorilla/rpc allows usage of HTTP POST requests fo
 ### Installation ###
 Assuming you already imported gorilla/rpc, use the following command:
 
-    go get github.com/divan/gorilla-xmlrpc/xml
+    go get github.com/jpcweb/gorilla-xmlrpc/xml
 
 ### Examples ###
 
@@ -26,7 +26,7 @@ import (
     "log"
     "net/http"
     "github.com/gorilla/rpc"
-    "github.com/divan/gorilla-xmlrpc/xml"
+    "github.com/jpcweb/gorilla-xmlrpc/xml"
 )
 
 type HelloService struct{}
