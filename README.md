@@ -1,9 +1,9 @@
 # gorilla-xmlrpc #
 
-[![Build Status](https://drone.io/github.com/divan/gorilla-xmlrpc/status.png)](https://drone.io/github.com/divan/gorilla-xmlrpc/latest)
-[![GoDoc](https://godoc.org/github.com/divan/gorilla-xmlrpc/xml?status.svg)](https://godoc.org/github.com/divan/gorilla-xmlrpc/xml)
+[![Build Status](https://drone.io/github.com/jpcweb/gorilla-xmlrpc/status.png)](https://drone.io/github.com/jpcweb/gorilla-xmlrpc/latest)
+[![GoDoc](https://godoc.org/github.com/jpcweb/gorilla-xmlrpc/xml?status.svg)](https://godoc.org/github.com/jpcweb/gorilla-xmlrpc/xml)
 
-XML-RPC implementation for the Gorilla/RPC toolkit.
+XML-RPC implementation for the Gorilla/RPC toolkit (jpcweb Fork).
 
 It implements both server and client.
 
@@ -107,17 +107,18 @@ For the better understanding, I use terms 'rpc2xml' and 'xml2rpc' instead of 'ma
 
 ### Supported types ###
 
-| XML-RPC          | Golang        |
-| ---------------- | ------------- |
-| int, i4          | int           |
-| double           | float64       |
-| boolean          | bool          |
-| string           | string        |
-| dateTime.iso8601 | time.Time     |
-| base64           | []byte        |
-| struct           | struct        |
-| array            | []interface{} |
-| nil              | nil           |
+| XML-RPC          | Golang             |
+| ---------------- | ------------------ |
+| int, i4          | int                |
+| double           | float64            |
+| boolean          | bool               |
+| string           | string             |
+| dateTime.iso8601 | time.Time          |
+| base64           | []byte             |
+| struct           | struct             |
+| struct           | map[string]string  |
+| array            | []interface{}      |
+| nil              | nil                |
 
 ### TODO ###
 
