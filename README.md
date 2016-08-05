@@ -1,6 +1,5 @@
 # gorilla-xmlrpc #
 
-[![Build Status](https://drone.io/github.com/jpcweb/gorilla-xmlrpc/status.png)](https://drone.io/github.com/jpcweb/gorilla-xmlrpc/latest)
 [![GoDoc](https://godoc.org/github.com/jpcweb/gorilla-xmlrpc/xml?status.svg)](https://godoc.org/github.com/jpcweb/gorilla-xmlrpc/xml)
 
 XML-RPC implementation for the Gorilla/RPC toolkit (jpcweb Fork).
