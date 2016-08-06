@@ -1,8 +1,9 @@
 # gorilla-xmlrpc #
 
-[![GoDoc](https://godoc.org/github.com/jpcweb/gorilla-xmlrpc/xml?status.svg)](https://godoc.org/github.com/jpcweb/gorilla-xmlrpc/xml)
+[![Build Status](https://drone.io/github.com/divan/gorilla-xmlrpc/status.png)](https://drone.io/github.com/divan/gorilla-xmlrpc/latest)
+[![GoDoc](https://godoc.org/github.com/divan/gorilla-xmlrpc/xml?status.svg)](https://godoc.org/github.com/divan/gorilla-xmlrpc/xml)
 
-XML-RPC implementation for the Gorilla/RPC toolkit (jpcweb Fork).
+XML-RPC implementation for the Gorilla/RPC toolkit.
 
 It implements both server and client.
 
@@ -12,7 +13,7 @@ Unlike net/rpc from Go strlib, gorilla/rpc allows usage of HTTP POST requests fo
 ### Installation ###
 Assuming you already imported gorilla/rpc, use the following command:
 
-    go get github.com/jpcweb/gorilla-xmlrpc/xml
+    go get github.com/divan/gorilla-xmlrpc/xml
 
 ### Examples ###
 
@@ -25,7 +26,7 @@ import (
     "log"
     "net/http"
     "github.com/gorilla/rpc"
-    "github.com/jpcweb/gorilla-xmlrpc/xml"
+    "github.com/divan/gorilla-xmlrpc/xml"
 )
 
 type HelloService struct{}
@@ -106,18 +107,18 @@ For the better understanding, I use terms 'rpc2xml' and 'xml2rpc' instead of 'ma
 
 ### Supported types ###
 
-| XML-RPC          | Golang                  |
-| ---------------- | ----------------------- |
-| int, i4          | int                     |
-| double           | float64                 |
-| boolean          | bool                    |
-| string           | string                  |
-| dateTime.iso8601 | time.Time               |
-| base64           | []byte                  |
-| struct           | struct                  |
-| struct           | map[string]interface{}  |
-| array            | []interface{}           |
-| nil              | nil                     |
+| XML-RPC          | Golang                 |
+| ---------------- | ---------------------- |
+| int, i4          | int                    |
+| double           | float64                |
+| boolean          | bool                   |
+| string           | string                 |
+| dateTime.iso8601 | time.Time              |
+| base64           | []byte                 |
+| struct           | struct                 |
+| struct           | map[string]interface{} |
+| array            | []interface{}          |
+| nil              | nil                    |
 
 ### TODO ###
 
