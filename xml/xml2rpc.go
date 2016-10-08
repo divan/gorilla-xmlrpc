@@ -40,7 +40,7 @@ type value struct {
 	Boolean  string   `xml:"boolean"`
 	DateTime string   `xml:"dateTime.iso8601"`
 	Base64   string   `xml:"base64"`
-	Raw      string   `xml:",innerxml"` // the value can be defualt string
+	Raw      string   `xml:",innerxml"` // the value can be default string
 }
 
 type member struct {

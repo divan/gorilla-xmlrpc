@@ -80,17 +80,27 @@ type TaggedStructRpc2Xml struct {
 }
 
 type ActualTaggedStructRpc2Xml struct {
-	Foo string `xml:"other"`
-	Bar int
+	Foo             string `xml:"other"`
+	Bar             int
+	NonEmptyUnnamed string        `xml:",omitempty"`
+	NonEmptyNamed   string        `xml:"emptiness,omitempty"`
+	EmptyString     string        `xml:",omitempty"`
+	EmptyBool       bool          `xml:"boo,omitempty"`
+	EmptyArray      []interface{} `xml:"ari,omitempty"`
+	EmptyStruct     struct{}      `xml:"struck,omitempty"`
+	EmptyNum        int           `xml:"numi,omitempty"`
+	Nilly           *int          `xml:"nowhere,omitempty"`
 }
 
+var emptyStruct struct{}
+
 func TestRPC2XmlTaggedStruct(t *testing.T) {
-	req := &TaggedStructRpc2Xml{ActualTaggedStructRpc2Xml{"testing", 123}}
+	req := &TaggedStructRpc2Xml{ActualTaggedStructRpc2Xml{"testing", 123, "no tag name", "tag named", "", false, make([]interface{}, 0), emptyStruct, 0, nil}}
 	xml, err := rpcResponse2XML(req)
 	if err != nil {
 		t.Error("RPC2XML conversion failed", err)
 	}
-	expected := "<methodResponse><params><param><value><struct><member><name>other</name><value><string>testing</string></value></member><member><name>Bar</name><value><int>123</int></value></member></struct></value></param></params></methodResponse>"
+	expected := "<methodResponse><params><param><value><struct><member><name>other</name><value><string>testing</string></value></member><member><name>Bar</name><value><int>123</int></value></member><member><name>NonEmptyUnnamed</name><value><string>no tag name</string></value></member><member><name>emptiness</name><value><string>tag named</string></value></member></struct></value></param></params></methodResponse>"
 	if xml != expected {
 		t.Error("RPC2XML conversion of a tagged struct failed")
 		t.Error("Expected", expected)
