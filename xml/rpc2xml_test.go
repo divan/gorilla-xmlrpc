@@ -74,3 +74,26 @@ func TestRpc2XmlNil(t *testing.T) {
 		t.Error("Got", xml)
 	}
 }
+
+type TaggedStructRpc2Xml struct {
+	Actual ActualTaggedStructRpc2Xml
+}
+
+type ActualTaggedStructRpc2Xml struct {
+	Foo string `xml:"foo"`
+	Bar int
+}
+
+func TestRPC2XmlTaggedStruct(t *testing.T) {
+	req := &TaggedStructRpc2Xml{ActualTaggedStructRpc2Xml{"testing", 123}}
+	xml, err := rpcResponse2XML(req)
+	if err != nil {
+		t.Error("RPC2XML conversion failed", err)
+	}
+	expected := "<methodResponse><params><param><value><struct><member><name>foo</name><value><string>testing</string></value></member><member><name>Bar</name><value><int>123</int></value></member></struct></value></param></params></methodResponse>"
+	if xml != expected {
+		t.Error("RPC2XML conversion of a tagged struct failed")
+		t.Error("Expected", expected)
+		t.Error("Got", xml)
+	}
+}

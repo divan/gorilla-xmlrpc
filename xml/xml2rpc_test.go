@@ -154,3 +154,26 @@ Requiredattribute'user'notfound:
 		}
 	}
 }
+
+type TaggedStructXml2Rpc struct {
+	Actual ActualTaggedStructXml2Rpc
+}
+
+type ActualTaggedStructXml2Rpc struct {
+	Foo string `xml:"foo"`
+	Bar int
+}
+
+func TestXML2RPCTaggedStruct(t *testing.T) {
+	req := new(TaggedStructXml2Rpc)
+	err := xml2RPC("<methodCall><methodName>Some.Method</methodName><params><param><value><struct><member><name>foo</name><value><string>testing</string></value></member><member><name>Bar</name><value><int>123</int></value></member></struct></value></param></params></methodCall>", req)
+	if err != nil {
+		t.Error("XML2RPC conversion failed", err)
+	}
+	expected_req := &TaggedStructXml2Rpc{ActualTaggedStructXml2Rpc{"testing", 123}}
+	if !reflect.DeepEqual(req, expected_req) {
+		t.Error("XML2RPC conversion to a tagged struct failed")
+		t.Error("Expected", expected_req)
+		t.Error("Got", req)
+	}
+}
