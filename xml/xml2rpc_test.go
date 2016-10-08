@@ -160,13 +160,13 @@ type TaggedStructXml2Rpc struct {
 }
 
 type ActualTaggedStructXml2Rpc struct {
-	Foo string `xml:"foo"`
+	Foo string `xml:"other"`
 	Bar int
 }
 
 func TestXML2RPCTaggedStruct(t *testing.T) {
 	req := new(TaggedStructXml2Rpc)
-	err := xml2RPC("<methodCall><methodName>Some.Method</methodName><params><param><value><struct><member><name>foo</name><value><string>testing</string></value></member><member><name>Bar</name><value><int>123</int></value></member></struct></value></param></params></methodCall>", req)
+	err := xml2RPC("<methodCall><methodName>Some.Method</methodName><params><param><value><struct><member><name>other</name><value><string>testing</string></value></member><member><name>Bar</name><value><int>123</int></value></member></struct></value></param></params></methodCall>", req)
 	if err != nil {
 		t.Error("XML2RPC conversion failed", err)
 	}

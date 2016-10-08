@@ -80,7 +80,7 @@ type TaggedStructRpc2Xml struct {
 }
 
 type ActualTaggedStructRpc2Xml struct {
-	Foo string `xml:"foo"`
+	Foo string `xml:"other"`
 	Bar int
 }
 
@@ -90,7 +90,7 @@ func TestRPC2XmlTaggedStruct(t *testing.T) {
 	if err != nil {
 		t.Error("RPC2XML conversion failed", err)
 	}
-	expected := "<methodResponse><params><param><value><struct><member><name>foo</name><value><string>testing</string></value></member><member><name>Bar</name><value><int>123</int></value></member></struct></value></param></params></methodResponse>"
+	expected := "<methodResponse><params><param><value><struct><member><name>other</name><value><string>testing</string></value></member><member><name>Bar</name><value><int>123</int></value></member></struct></value></param></params></methodResponse>"
 	if xml != expected {
 		t.Error("RPC2XML conversion of a tagged struct failed")
 		t.Error("Expected", expected)
