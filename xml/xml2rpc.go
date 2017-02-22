@@ -62,11 +62,6 @@ func xml2RPC(xmlraw string, rpc interface{}) error {
 		return getFaultResponse(ret.Fault)
 	}
 
-	// Structures should have equal number of fields
-	//if reflect.TypeOf(rpc).Elem().NumField() != len(ret.Params) {
-	//	return FaultWrongArgumentsNumber
-	//}
-
 	// Now, convert temporal structure into the
 	// passed rpc variable, according to it's structure
 	fieldNum := reflect.TypeOf(rpc).Elem().NumField()
