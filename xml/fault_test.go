@@ -18,12 +18,12 @@ import (
 type FaultTestRequest struct {
 	A int
 	B int
+	C int
 }
 
 type FaultTestBadRequest struct {
 	A int
 	B int
-	C int
 }
 
 type FaultTestResponse struct {
@@ -50,7 +50,7 @@ func TestFaults(t *testing.T) {
 	var err error
 
 	var res1 FaultTestResponse
-	err = execute(t, s, "FaultTest.Multiply", &FaultTestBadRequest{4, 2, 4}, &res1)
+	err = execute(t, s, "FaultTest.Multiply", &FaultTestBadRequest{4, 2}, &res1)
 	if err == nil {
 		t.Fatal("expected err to be not nil, but got:", err)
 	}
@@ -66,7 +66,7 @@ func TestFaults(t *testing.T) {
 	}
 
 	var res2 FaultTestBadResponse
-	err = execute(t, s, "FaultTest.Multiply", &FaultTestRequest{4, 2}, &res2)
+	err = execute(t, s, "FaultTest.Multiply", &FaultTestRequest{4, 2, 4}, &res2)
 	if err == nil {
 		t.Fatal("expected err to be not nil, but got:", err)
 	}

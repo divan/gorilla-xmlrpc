@@ -5,6 +5,7 @@
 package xml
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
@@ -93,10 +94,10 @@ func (c *CodecRequest) ReadRequest(args interface{}) error {
 // response is the pointer to the Service.Response structure
 // it gets encoded into the XML-RPC xml string
 func (c *CodecRequest) WriteResponse(w http.ResponseWriter, response interface{}, methodErr error) error {
-	var xmlstr string
 	if c.err == nil {
 		c.err = methodErr
 	}
+	buffer := bytes.NewBuffer(make([]byte, 0))
 	if c.err != nil {
 		var fault Fault
 		switch c.err.(type) {
@@ -106,12 +107,12 @@ func (c *CodecRequest) WriteResponse(w http.ResponseWriter, response interface{}
 			fault = FaultApplicationError
 			fault.String += fmt.Sprintf(": %v", c.err)
 		}
-		xmlstr = fault2XML(fault)
+		fault2XML(fault, buffer)
 	} else {
-		xmlstr, _ = rpcResponse2XML(response)
+		rpcResponse2XML(response, buffer)
 	}
 
 	w.Header().Set("Content-Type", "text/xml; charset=utf-8")
-	w.Write([]byte(xmlstr))
+	buffer.WriteTo(w)
 	return nil
 }
