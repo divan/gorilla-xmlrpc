@@ -60,7 +60,12 @@ curl -v -X POST -H "Content-Type: text/xml" -d '<methodCall><methodName>HelloSer
 Implementing client is beyond the scope of this package, but with encoding/decoding handlers it should be pretty trivial. Here is an example which works with the server introduced above.
 
 ```go
+//+build jex
+//go:generate jex
+
 package main
+
+import . "github.com/anjensan/jex"
 
 import (
     "log"
@@ -69,26 +74,21 @@ import (
     "github.com/divan/gorilla-xmlrpc/xml"
 )
 
-func XmlRpcCall(method string, args struct{Who string}) (reply struct{Message string}, err error) {
-    buf, _ := xml.EncodeClientRequest(method, &args)
-
-    resp, err := http.Post("http://localhost:1234/RPC2", "text/xml", bytes.NewBuffer(buf))
-    if err != nil {
-        return
-    }
+func XmlRpcCall_(method string, args struct{Who string}) (reply struct{Message string}) {
+    buf := xml.EncodeClientRequest_(method, &args)
+    resp, ERR := http.Post("http://localhost:1234/RPC2", "text/xml", bytes.NewBuffer(buf))
     defer resp.Body.Close()
-
-    err = xml.DecodeClientResponse(resp.Body, &reply)
-    return
+    xml.DecodeClientResponse_(resp.Body, &reply)
+	return
 }
 
 func main() {
-    reply, err := XmlRpcCall("HelloService.Say", struct{Who string}{"User 1"})
-    if err != nil {
-        log.Fatal(err)
+    if TRY() {
+        reply := XmlRpcCall_("HelloService.Say", struct{Who string}{"User 1"})
+        log.Printf("Response: %s\n", reply.Message)
+    } else {
+        log.Fatal(EX())
     }
-
-    log.Printf("Response: %s\n", reply.Message)
 }
 
 ```

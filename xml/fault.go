@@ -2,10 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//+build jex
+//go:generate jex
+
 package xml
 
 import (
 	"fmt"
+	. "github.com/anjensan/jex"
 )
 
 // Default Faults
@@ -34,8 +38,13 @@ func (f Fault) Error() string {
 // Fault2XML is a quick 'marshalling' replacemnt for the Fault case.
 func fault2XML(fault Fault) string {
 	buffer := "<methodResponse><fault>"
-	xml, _ := rpc2XML(fault)
-	buffer += xml
+	if TRY() {
+		xml := rpc2XML_(fault)
+		buffer += xml
+	} else {
+		fmt.Printf("ERR: %v", EX())
+		buffer += "<nil/>"
+	}
 	buffer += "</fault></methodResponse>"
 	return buffer
 }

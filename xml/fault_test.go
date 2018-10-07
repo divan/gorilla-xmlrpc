@@ -2,7 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//+build jex
+//go:generate jex
+
 package xml
+
+import . "github.com/anjensan/jex"
 
 import (
 	"net/http"
@@ -47,38 +52,41 @@ func TestFaults(t *testing.T) {
 	s.RegisterCodec(NewCodec(), "text/xml")
 	s.RegisterService(new(FaultTest), "")
 
-	var err error
-
-	var res1 FaultTestResponse
-	err = execute(t, s, "FaultTest.Multiply", &FaultTestBadRequest{4, 2, 4}, &res1)
-	if err == nil {
-		t.Fatal("expected err to be not nil, but got:", err)
-	}
-	fault, ok := err.(Fault)
-	if !ok {
-		t.Fatal("expected error to be of concrete type Fault, but got", err)
-	}
-	if fault.Code != -32602 {
-		t.Errorf("wrong fault code: %d", fault.Code)
-	}
-	if fault.String != "Wrong Arguments Number" {
-		t.Errorf("wrong fault string: %s", fault.String)
-	}
-
-	var res2 FaultTestBadResponse
-	err = execute(t, s, "FaultTest.Multiply", &FaultTestRequest{4, 2}, &res2)
-	if err == nil {
-		t.Fatal("expected err to be not nil, but got:", err)
-	}
-	fault, ok = err.(Fault)
-	if !ok {
-		t.Fatal("expected error to be of concrete type Fault, but got", err)
-	}
-	if fault.Code != -32602 {
-		t.Errorf("wrong fault code: %d", fault.Code)
+	if TRY() {
+		var res1 FaultTestResponse
+		execute_(t, s, "FaultTest.Multiply", &FaultTestBadRequest{4, 2, 4}, &res1)
+		t.Fatal("expected err to be not nil")
+	} else {
+		err := EX().Err()
+		fault, ok := err.(Fault)
+		if !ok {
+			t.Fatal("expected error to be of concrete type Fault, but got", err)
+		}
+		if fault.Code != -32602 {
+			t.Errorf("wrong fault code: %d", fault.Code)
+		}
+		if fault.String != "Wrong Arguments Number" {
+			t.Errorf("wrong fault string: %s", fault.String)
+		}
 	}
 
-	if !strings.HasPrefix(fault.String, "Invalid Method Parameters: fields type mismatch") {
-		t.Errorf("wrong response: %s", fault.String)
+	if TRY() {
+		var res2 FaultTestBadResponse
+		execute_(t, s, "FaultTest.Multiply", &FaultTestRequest{4, 2}, &res2)
+		t.Fatal("expected err to be not nil")
+	} else {
+		err := EX().Err()
+		fault, ok := err.(Fault)
+		if !ok {
+			t.Fatal("expected error to be of concrete type Fault, but got", err)
+		}
+		if fault.Code != -32602 {
+			t.Errorf("wrong fault code: %d", fault.Code)
+		}
+		if !strings.HasPrefix(fault.String, "Invalid Method Parameters: fields type mismatch") {
+			t.Errorf("wrong response: %s", fault.String)
+		}
 	}
+
+
 }

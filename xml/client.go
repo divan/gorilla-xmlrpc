@@ -2,25 +2,32 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//+build jex
+//go:generate jex
+
+
 package xml
 
 import (
 	"io"
 	"io/ioutil"
+
+	. "github.com/anjensan/jex"
 )
 
 // EncodeClientRequest encodes parameters for a XML-RPC client request.
-func EncodeClientRequest(method string, args interface{}) ([]byte, error) {
-	xml, err := rpcRequest2XML(method, args)
-	return []byte(xml), err
+func EncodeClientRequest_(method string, args interface{}) []byte {
+	return []byte(rpcRequest2XML_(method, args))
 }
 
 // DecodeClientResponse decodes the response body of a client request into
 // the interface reply.
-func DecodeClientResponse(r io.Reader, reply interface{}) error {
-	rawxml, err := ioutil.ReadAll(r)
-	if err != nil {
-		return FaultSystemError
+func DecodeClientResponse_(r io.Reader, reply interface{}) {
+	var rawxml []byte
+	if TRY() {
+		rawxml, ERR = ioutil.ReadAll(r)
+	} else {
+		THROW(FaultSystemError)
 	}
-	return xml2RPC(string(rawxml), reply)
+	xml2RPC_(string(rawxml), reply)
 }

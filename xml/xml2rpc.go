@@ -2,7 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//+build jex
+//go:generate jex
+
 package xml
+
+import . "github.com/anjensan/jex"
 
 import (
 	"bytes"
@@ -17,6 +22,8 @@ import (
 
 	"github.com/rogpeppe/go-charset/charset"
 	_ "github.com/rogpeppe/go-charset/data"
+
+	"github.com/anjensan/jex/ex"
 )
 
 // Types used for unmarshalling
@@ -48,36 +55,33 @@ type member struct {
 	Value value  `xml:"value"`
 }
 
-func xml2RPC(xmlraw string, rpc interface{}) error {
+func xml2RPC_(xmlraw string, rpc interface{}) {
 	// Unmarshal raw XML into the temporal structure
 	var ret response
 	decoder := xml.NewDecoder(bytes.NewReader([]byte(xmlraw)))
 	decoder.CharsetReader = charset.NewReader
-	err := decoder.Decode(&ret)
-	if err != nil {
-		return FaultDecode
+
+	if TRY() {
+		ERR = decoder.Decode(&ret)
+	} else {
+		THROW(FaultDecode)
 	}
 
 	if !ret.Fault.IsEmpty() {
-		return getFaultResponse(ret.Fault)
+		THROW(getFaultResponse(ret.Fault))
 	}
 
 	// Structures should have equal number of fields
 	if reflect.TypeOf(rpc).Elem().NumField() != len(ret.Params) {
-		return FaultWrongArgumentsNumber
+		THROW(FaultWrongArgumentsNumber)
 	}
 
 	// Now, convert temporal structure into the
 	// passed rpc variable, according to it's structure
 	for i, param := range ret.Params {
 		field := reflect.ValueOf(rpc).Elem().Field(i)
-		err = value2Field(param.Value, &field)
-		if err != nil {
-			return err
-		}
+		value2Field_(param.Value, &field)
 	}
-
-	return nil
 }
 
 // getFaultResponse converts faultValue to Fault.
@@ -101,36 +105,30 @@ func getFaultResponse(fault faultValue) Fault {
 	return Fault{Code: code, String: str}
 }
 
-func value2Field(value value, field *reflect.Value) error {
-	if !field.CanSet() {
-		return FaultApplicationError
-	}
-
-	var (
-		err error
-		val interface{}
-	)
+func value2Field_(value value, field *reflect.Value) {
+	ex.Check_(field.CanSet(), FaultApplicationError)
+	var val interface{}
 
 	switch {
 	case value.Int != "":
-		val, _ = strconv.Atoi(value.Int)
+		val, ERR = strconv.Atoi(value.Int)
 	case value.Int4 != "":
-		val, _ = strconv.Atoi(value.Int4)
+		val, ERR = strconv.Atoi(value.Int4)
 	case value.Double != "":
-		val, _ = strconv.ParseFloat(value.Double, 64)
+		val, ERR = strconv.ParseFloat(value.Double, 64)
 	case value.String != "":
 		val = value.String
 	case value.Boolean != "":
 		val = xml2Bool(value.Boolean)
 	case value.DateTime != "":
-		val, err = xml2DateTime(value.DateTime)
+		val = xml2DateTime_(value.DateTime)
 	case value.Base64 != "":
-		val, err = xml2Base64(value.Base64)
+		val = xml2Base64_(value.Base64)
 	case len(value.Struct) != 0:
 		if field.Kind() != reflect.Struct {
 			fault := FaultInvalidParams
 			fault.String += fmt.Sprintf("structure fields mismatch: %s != %s", field.Kind(), reflect.Struct.String())
-			return fault
+			THROW(fault)
 		}
 		s := value.Struct
 		for i := 0; i < len(s); i++ {
@@ -138,7 +136,7 @@ func value2Field(value value, field *reflect.Value) error {
 			// methods in lowercase, which cannot be used
 			field_name := uppercaseFirst(s[i].Name)
 			f := field.FieldByName(field_name)
-			err = value2Field(s[i].Value, &f)
+			value2Field_(s[i].Value, &f)
 		}
 	case len(value.Array) != 0:
 		a := value.Array
@@ -147,7 +145,7 @@ func value2Field(value value, field *reflect.Value) error {
 			len(a), len(a))
 		for i := 0; i < len(a); i++ {
 			item := slice.Index(i)
-			err = value2Field(a[i], &item)
+			value2Field_(a[i], &item)
 		}
 		f = reflect.AppendSlice(f, slice)
 		val = f.Interface()
@@ -166,13 +164,11 @@ func value2Field(value value, field *reflect.Value) error {
 			fault.String += fmt.Sprintf(": fields type mismatch: %s != %s",
 				reflect.TypeOf(val),
 				reflect.TypeOf(field.Interface()))
-			return fault
+			THROW(fault)
 		}
 
 		field.Set(reflect.ValueOf(val))
 	}
-
-	return err
 }
 
 func xml2Bool(value string) bool {
@@ -186,20 +182,20 @@ func xml2Bool(value string) bool {
 	return b
 }
 
-func xml2DateTime(value string) (time.Time, error) {
+func xml2DateTime_(value string) time.Time {
 	var (
 		year, month, day     int
 		hour, minute, second int
 	)
-	_, err := fmt.Sscanf(value, "%04d%02d%02dT%02d:%02d:%02d",
+	_, ERR := fmt.Sscanf(value, "%04d%02d%02dT%02d:%02d:%02d",
 		&year, &month, &day,
 		&hour, &minute, &second)
-	t := time.Date(year, time.Month(month), day, hour, minute, second, 0, time.Local)
-	return t, err
+	return time.Date(year, time.Month(month), day, hour, minute, second, 0, time.Local)
 }
 
-func xml2Base64(value string) ([]byte, error) {
-	return base64.StdEncoding.DecodeString(value)
+func xml2Base64_(value string) []byte {
+	r, ERR := base64.StdEncoding.DecodeString(value)
+	return r
 }
 
 func uppercaseFirst(in string) (out string) {

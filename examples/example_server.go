@@ -1,4 +1,9 @@
+//+build jex
+//go:generate jex
+
 package main
+
+import . "github.com/anjensan/jex"
 
 import (
     "log"

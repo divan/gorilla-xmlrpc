@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//+build jex
+//go:generate jex
+
 package xml
 
 import (
@@ -11,6 +14,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/rpc"
+
+	. "github.com/anjensan/jex"
 )
 
 // ----------------------------------------------------------------------------
@@ -36,19 +41,19 @@ func (c *Codec) RegisterAlias(alias, method string) {
 
 // NewRequest returns a CodecRequest.
 func (c *Codec) NewRequest(r *http.Request) rpc.CodecRequest {
-	rawxml, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return &CodecRequest{err: err}
-	}
-	defer r.Body.Close()
-
 	var request ServerRequest
-	if err := xml.Unmarshal(rawxml, &request); err != nil {
-		return &CodecRequest{err: err}
-	}
-	request.rawxml = string(rawxml)
-	if method, ok := c.aliases[request.Method]; ok {
-		request.Method = method
+	if TRY() {
+		rawxml, ERR := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
+
+		ERR := xml.Unmarshal(rawxml, &request)
+
+		request.rawxml = string(rawxml)
+		if method, ok := c.aliases[request.Method]; ok {
+			request.Method = method
+		}
+	} else {
+		return &CodecRequest{err: EX().Err()}
 	}
 	return &CodecRequest{request: &request}
 }
@@ -84,7 +89,11 @@ func (c *CodecRequest) Method() (string, error) {
 // args is the pointer to the Service.Args structure
 // it gets populated from temporary XML structure
 func (c *CodecRequest) ReadRequest(args interface{}) error {
-	c.err = xml2RPC(c.request.rawxml, args)
+	if TRY() {
+		xml2RPC_(c.request.rawxml, args)
+	} else {
+		c.err = EX().Wrap()
+	}
 	return nil
 }
 
@@ -94,20 +103,20 @@ func (c *CodecRequest) ReadRequest(args interface{}) error {
 // it gets encoded into the XML-RPC xml string
 func (c *CodecRequest) WriteResponse(w http.ResponseWriter, response interface{}, methodErr error) error {
 	var xmlstr string
-	if c.err != nil {
+	if TRY() {
+		ERR = c.err
+		xmlstr = rpcResponse2XML_(response)
+	} else {
 		var fault Fault
-		switch c.err.(type) {
+		switch f := EX().Err().(type) {
 		case Fault:
-			fault = c.err.(Fault)
+			fault = f
 		default:
 			fault = FaultApplicationError
-			fault.String += fmt.Sprintf(": %v", c.err)
+			fault.String += fmt.Sprintf(": %v", f)
 		}
 		xmlstr = fault2XML(fault)
-	} else {
-		xmlstr, _ = rpcResponse2XML(response)
 	}
-
 	w.Header().Set("Content-Type", "text/xml; charset=utf-8")
 	w.Write([]byte(xmlstr))
 	return nil

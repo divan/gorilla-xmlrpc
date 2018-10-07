@@ -2,6 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//+build jex
+//go:generate jex
+
+
 package xml
 
 import (
@@ -10,41 +14,38 @@ import (
 	"reflect"
 	"strings"
 	"time"
+
+	. "github.com/anjensan/jex"
 )
 
-func rpcRequest2XML(method string, rpc interface{}) (string, error) {
+func rpcRequest2XML_(method string, rpc interface{}) string {
 	buffer := "<methodCall><methodName>"
 	buffer += method
 	buffer += "</methodName>"
-	params, err := rpcParams2XML(rpc)
-	buffer += params
+	buffer += rpcParams2XML_(rpc)
 	buffer += "</methodCall>"
-	return buffer, err
+	return buffer
 }
 
-func rpcResponse2XML(rpc interface{}) (string, error) {
+func rpcResponse2XML_(rpc interface{}) string {
 	buffer := "<methodResponse>"
-	params, err := rpcParams2XML(rpc)
-	buffer += params
+	buffer += rpcParams2XML_(rpc)
 	buffer += "</methodResponse>"
-	return buffer, err
+	return buffer
 }
 
-func rpcParams2XML(rpc interface{}) (string, error) {
-	var err error
+func rpcParams2XML_(rpc interface{}) string {
 	buffer := "<params>"
 	for i := 0; i < reflect.ValueOf(rpc).Elem().NumField(); i++ {
-		var xml string
 		buffer += "<param>"
-		xml, err = rpc2XML(reflect.ValueOf(rpc).Elem().Field(i).Interface())
-		buffer += xml
+		buffer += rpc2XML_(reflect.ValueOf(rpc).Elem().Field(i).Interface())
 		buffer += "</param>"
 	}
 	buffer += "</params>"
-	return buffer, err
+	return buffer
 }
 
-func rpc2XML(value interface{}) (string, error) {
+func rpc2XML_(value interface{}) string {
 	out := "<value>"
 	switch reflect.ValueOf(value).Kind() {
 	case reflect.Int:
@@ -57,14 +58,14 @@ func rpc2XML(value interface{}) (string, error) {
 		out += bool2XML(value.(bool))
 	case reflect.Struct:
 		if reflect.TypeOf(value).String() != "time.Time" {
-			out += struct2XML(value)
+			out += struct2XML_(value)
 		} else {
 			out += time2XML(value.(time.Time))
 		}
 	case reflect.Slice, reflect.Array:
 		// FIXME: is it the best way to recognize '[]byte'?
 		if reflect.TypeOf(value).String() != "[]uint8" {
-			out += array2XML(value)
+			out += array2XML_(value)
 		} else {
 			out += base642XML(value.([]byte))
 		}
@@ -72,9 +73,11 @@ func rpc2XML(value interface{}) (string, error) {
 		if reflect.ValueOf(value).IsNil() {
 			out += "<nil/>"
 		}
+	default:
+		THROW(fmt.Errorf("unsupported type %T", value))
 	}
 	out += "</value>"
-	return out, nil
+	return out
 }
 
 func bool2XML(value bool) string {
@@ -95,7 +98,7 @@ func string2XML(value string) string {
 	return fmt.Sprintf("<string>%s</string>", value)
 }
 
-func struct2XML(value interface{}) (out string) {
+func struct2XML_(value interface{}) (out string) {
 	out += "<struct>"
 	for i := 0; i < reflect.TypeOf(value).NumField(); i++ {
 		field := reflect.ValueOf(value).Field(i)
@@ -106,7 +109,7 @@ func struct2XML(value interface{}) (out string) {
 		} else {
 			name = field_type.Name
 		}
-		field_value, _ := rpc2XML(field.Interface())
+		field_value := rpc2XML_(field.Interface())
 		field_name := fmt.Sprintf("<name>%s</name>", name)
 		out += fmt.Sprintf("<member>%s%s</member>", field_name, field_value)
 	}
@@ -114,10 +117,10 @@ func struct2XML(value interface{}) (out string) {
 	return
 }
 
-func array2XML(value interface{}) (out string) {
+func array2XML_(value interface{}) (out string) {
 	out += "<array><data>"
 	for i := 0; i < reflect.ValueOf(value).Len(); i++ {
-		item_xml, _ := rpc2XML(reflect.ValueOf(value).Index(i).Interface())
+		item_xml := rpc2XML_(reflect.ValueOf(value).Index(i).Interface())
 		out += item_xml
 	}
 	out += "</data></array>"
