@@ -52,7 +52,7 @@ func main() {
 It's pretty self-explanatory and can be tested with any xmlrpc client, even raw curl request:
 
 ```bash
-curl -v -X POST -H "Content-Type: text/xml" -d '<methodCall><methodName>HelloService.Say</methodName><params><param><value><struct><member><name>Who</name><value><string>XMLTest</string></value></member></struct></value></param><param><value><struct><member><name>Code</name><value><int>123</int></value></member></struct></value></param></params></methodCall>' http://localhost:1234/RPC2
+curl -v -X POST -H "Content-Type: text/xml" -d '<methodCall><methodName>HelloService.Say</methodName><params><param><value><string>User 1</string></value></param></params></methodCall>' http://localhost:1234/RPC2
 ```
 
 #### Client Example ####
