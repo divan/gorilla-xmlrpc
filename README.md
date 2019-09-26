@@ -106,17 +106,18 @@ For the better understanding, I use terms 'rpc2xml' and 'xml2rpc' instead of 'ma
 
 ### Supported types ###
 
-| XML-RPC          | Golang        |
-| ---------------- | ------------- |
-| int, i4          | int           |
-| double           | float64       |
-| boolean          | bool          |
-| string           | string        |
-| dateTime.iso8601 | time.Time     |
-| base64           | []byte        |
-| struct           | struct        |
-| array            | []interface{} |
-| nil              | nil           |
+| XML-RPC          | Golang                 |
+| ---------------- | ---------------------- |
+| int, i4          | int                    |
+| double           | float64                |
+| boolean          | bool                   |
+| string           | string                 |
+| dateTime.iso8601 | time.Time              |
+| base64           | []byte                 |
+| struct           | struct                 |
+| struct           | map[string]interface{} |
+| array            | []interface{}          |
+| nil              | nil                    |
 
 ### TODO ###
 
