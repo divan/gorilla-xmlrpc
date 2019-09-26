@@ -151,6 +151,8 @@ func value2Field(value value, field *reflect.Value) error {
 		}
 		f = reflect.AppendSlice(f, slice)
 		val = f.Interface()
+	case len(value.Array) == 0:
+		val = val
 
 	default:
 		// value field is default to string, see http://en.wikipedia.org/wiki/XML-RPC#Data_types
