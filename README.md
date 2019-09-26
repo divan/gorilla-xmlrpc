@@ -1,6 +1,5 @@
 # gorilla-xmlrpc #
 
-[![Build Status](https://drone.io/github.com/divan/gorilla-xmlrpc/status.png)](https://drone.io/github.com/divan/gorilla-xmlrpc/latest)
 [![GoDoc](https://godoc.org/github.com/divan/gorilla-xmlrpc/xml?status.svg)](https://godoc.org/github.com/divan/gorilla-xmlrpc/xml)
 
 XML-RPC implementation for the Gorilla/RPC toolkit.
