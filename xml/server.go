@@ -7,8 +7,10 @@ package xml
 import (
 	"encoding/xml"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/rpc"
 )
@@ -84,7 +86,7 @@ func (c *CodecRequest) Method() (string, error) {
 // args is the pointer to the Service.Args structure
 // it gets populated from temporary XML structure
 func (c *CodecRequest) ReadRequest(args interface{}) error {
-	c.err = xml2RPC(c.request.rawxml, args)
+	c.err = xml2RPC(strings.NewReader(c.request.rawxml), args)
 	return nil
 }
 
@@ -93,7 +95,6 @@ func (c *CodecRequest) ReadRequest(args interface{}) error {
 // response is the pointer to the Service.Response structure
 // it gets encoded into the XML-RPC xml string
 func (c *CodecRequest) WriteResponse(w http.ResponseWriter, response interface{}, methodErr error) error {
-	var xmlstr string
 	if c.err != nil {
 		var fault Fault
 		switch c.err.(type) {
@@ -103,12 +104,11 @@ func (c *CodecRequest) WriteResponse(w http.ResponseWriter, response interface{}
 			fault = FaultApplicationError
 			fault.String += fmt.Sprintf(": %v", c.err)
 		}
-		xmlstr = fault2XML(fault)
-	} else {
-		xmlstr, _ = rpcResponse2XML(response)
+		w.Header().Set("Content-Type", "text/xml; charset=utf-8")
+		io.WriteString(w, fault2XML(fault))
+		return nil
 	}
 
 	w.Header().Set("Content-Type", "text/xml; charset=utf-8")
-	w.Write([]byte(xmlstr))
-	return nil
+	return rpcResponse2XML(w, response)
 }
