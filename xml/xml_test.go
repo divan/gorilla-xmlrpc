@@ -170,7 +170,7 @@ func TestRPC2XMLConverter(t *testing.T) {
 	}
 
 	res := &Service1Response{42}
-	xml, err = rpcResponse2XML(res)
+	xml, err = rpcResponse2XMLStr(res)
 	if err != nil {
 		t.Error("RPC2XML conversion failed", err)
 	}

@@ -45,7 +45,7 @@ type StructSpecialCharsRpc2Xml struct {
 
 func TestRPC2XMLSpecialChars(t *testing.T) {
 	req := &StructSpecialCharsRpc2Xml{" & \" < > "}
-	xml, err := rpcResponse2XML(req)
+	xml, err := rpcResponse2XMLStr(req)
 	if err != nil {
 		t.Error("RPC2XML conversion failed", err)
 	}
@@ -63,7 +63,7 @@ type StructNilRpc2Xml struct {
 
 func TestRpc2XmlNil(t *testing.T) {
 	req := &StructNilRpc2Xml{nil}
-	xml, err := rpcResponse2XML(req)
+	xml, err := rpcResponse2XMLStr(req)
 	if err != nil {
 		t.Error("RPC2XML conversion failed", err)
 	}
