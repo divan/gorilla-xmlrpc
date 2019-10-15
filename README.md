@@ -94,7 +94,7 @@ func main() {
 
 ### Implementation details ###
 
-The main objective was to use standard encoding/xml package for XML marshalling/unmarshalling. Unfortunately, in current implementation there is no graceful way to implement common structre for marshal and unmarshal functions - marshalling doesn't handle interface{} types so far (though, it could be changed in the future).
+The main objective was to use standard encoding/xml package for XML marshalling/unmarshalling. Unfortunately, in current implementation there is no graceful way to implement common structure for marshal and unmarshal functions - marshalling doesn't handle interface{} types so far (though, it could be changed in the future).
 So, marshalling is implemented manually.
 
 Unmarshalling code first creates temporary structure for unmarshalling XML into, then converts it into the passed variable using *reflect* package.
@@ -121,4 +121,3 @@ For the better understanding, I use terms 'rpc2xml' and 'xml2rpc' instead of 'ma
 ### TODO ###
 
 *  Add more corner cases tests
-

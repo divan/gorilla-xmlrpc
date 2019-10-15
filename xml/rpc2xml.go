@@ -101,12 +101,48 @@ func struct2XML(value interface{}) (out string) {
 		field := reflect.ValueOf(value).Field(i)
 		field_type := reflect.TypeOf(value).Field(i)
 		var name string
-		if field_type.Tag.Get("xml") != "" {
-			name = field_type.Tag.Get("xml")
+		tag := field_type.Tag.Get("xml")
+		omit_empty := false
+		if tag != "" {
+			if strings.Contains(tag, "omitempty") {
+				omit_empty = true
+				val := strings.Split(tag, ",")
+				if len(val) == 1 || val[0] == "" {
+					//omit if empty but no field name defined, use struct default
+					name = field_type.Name
+				} else {
+					name = val[0]
+				}
+			} else {
+				name = tag
+			}
 		} else {
 			name = field_type.Name
 		}
 		field_value, _ := rpc2XML(field.Interface())
+		if omit_empty {
+			//from encoding/xml Marshal():
+			//empty values are false, 0, any nil pointer or interface value, and any array, slice, map, or string of length zero.
+			switch field_value {
+			case "<value><boolean>0</boolean></value>":
+				continue
+			case "<value><int>0</int></value>":
+				continue
+			case "<value><double>0</double></value>":
+				continue
+			case "<value><nil/></value>":
+				continue
+			case "<value><string></string></value>":
+				continue
+			case "<value><array><data></data></array></value>":
+				continue
+			case "<value><struct></struct></value>":
+				continue
+			default:
+				//assume there's not an empty base64 string nor empty time
+				//field_value = field_value
+			}
+		}
 		field_name := fmt.Sprintf("<name>%s</name>", name)
 		out += fmt.Sprintf("<member>%s%s</member>", field_name, field_value)
 	}
