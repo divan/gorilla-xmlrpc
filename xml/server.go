@@ -94,6 +94,9 @@ func (c *CodecRequest) ReadRequest(args interface{}) error {
 // it gets encoded into the XML-RPC xml string
 func (c *CodecRequest) WriteResponse(w http.ResponseWriter, response interface{}, methodErr error) error {
 	var xmlstr string
+	if c.err == nil {
+		c.err = methodErr
+	}
 	if c.err != nil {
 		var fault Fault
 		switch c.err.(type) {

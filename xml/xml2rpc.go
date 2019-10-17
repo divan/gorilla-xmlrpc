@@ -63,21 +63,37 @@ func xml2RPC(xmlraw string, rpc interface{}) error {
 	}
 
 	// Structures should have equal number of fields
-	if reflect.TypeOf(rpc).Elem().NumField() != len(ret.Params) {
-		return FaultWrongArgumentsNumber
-	}
+	//if reflect.TypeOf(rpc).Elem().NumField() != len(ret.Params) {
+	//	return FaultWrongArgumentsNumber
+	//}
 
 	// Now, convert temporal structure into the
 	// passed rpc variable, according to it's structure
-	for i, param := range ret.Params {
+	fieldNum := reflect.TypeOf(rpc).Elem().NumField()
+	//for i, param := range ret.Params {
+	for i:= 0; i < fieldNum; i += 1 {
 		field := reflect.ValueOf(rpc).Elem().Field(i)
-		err = value2Field(param.Value, &field)
+		if len(ret.Params) > i {
+			err = value2Field(ret.Params[i].Value, &field)
+		} else if reflect.TypeOf( rpc ).Elem().Field(i).Tag.Get("default") != "" {
+			err = value2Field( createValue( reflect.TypeOf(rpc).Elem().Field(i).Type.Kind(), reflect.TypeOf( rpc ).Elem().Field(i).Tag.Get("default")), &field)
+		}
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func createValue( kind reflect.Kind, val string ) value {
+        v := value{}
+        if kind == reflect.Bool {
+                v.Boolean = val
+        } else if kind == reflect.Int {
+                v.Int = val
+        }
+        return v
 }
 
 // getFaultResponse converts faultValue to Fault.
