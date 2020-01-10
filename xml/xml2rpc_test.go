@@ -154,3 +154,29 @@ Requiredattribute'user'notfound:
 		}
 	}
 }
+
+type StructXml2RpcUnknown struct {
+	Foo  interface{}
+	Data []interface{}
+}
+
+func TestXML2RPCUnknownTypes(t *testing.T) {
+	req := new(StructXml2RpcUnknown)
+	err := xml2RPC("<methodCall><methodName>Some.Method</methodName><params><param><value><int>42</int></value></param><param><value><array><data><value><int>100</int></value><value><string>Hello</string></value><value><boolean>1</boolean></value></data></array></value></param></params></methodCall>", req)
+	if err != nil {
+		t.Error("XML2RPC conversion failed", err)
+	}
+
+	expected_req := &StructXml2RpcUnknown{
+		Foo: 42,
+	}
+	expected_req.Data = append(expected_req.Data, 100)
+	expected_req.Data = append(expected_req.Data, "Hello")
+	expected_req.Data = append(expected_req.Data, true)
+
+	if !reflect.DeepEqual(req, expected_req) {
+		t.Error("XML2RPC conversion failed")
+		t.Error("Expected", expected_req)
+		t.Error("Got", req)
+	}
+}

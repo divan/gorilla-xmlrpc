@@ -163,7 +163,7 @@ func value2Field(value value, field *reflect.Value) error {
 	}
 
 	if val != nil {
-		if reflect.TypeOf(val) != reflect.TypeOf(field.Interface()) {
+		if reflect.TypeOf(val) != reflect.TypeOf(field.Interface()) && field.Kind() != reflect.Interface {
 			fault := FaultInvalidParams
 			fault.String += fmt.Sprintf(": fields type mismatch: %s != %s",
 				reflect.TypeOf(val),
