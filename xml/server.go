@@ -5,12 +5,14 @@
 package xml
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/rpc"
+	"golang.org/x/net/html/charset"
 )
 
 // ----------------------------------------------------------------------------
@@ -43,7 +45,10 @@ func (c *Codec) NewRequest(r *http.Request) rpc.CodecRequest {
 	defer r.Body.Close()
 
 	var request ServerRequest
-	if err := xml.Unmarshal(rawxml, &request); err != nil {
+	d := xml.NewDecoder(bytes.NewReader(rawxml))
+	d.CharsetReader = charset.NewReaderLabel
+
+	if err := d.Decode(&request); err != nil {
 		return &CodecRequest{err: err}
 	}
 	request.rawxml = string(rawxml)

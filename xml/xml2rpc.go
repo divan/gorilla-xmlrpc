@@ -54,6 +54,7 @@ func xml2RPC(xmlraw string, rpc interface{}) error {
 	decoder.CharsetReader = charset.NewReaderLabel
 	err := decoder.Decode(&ret)
 	if err != nil {
+		fmt.Println(err)
 		return FaultDecode
 	}
 
