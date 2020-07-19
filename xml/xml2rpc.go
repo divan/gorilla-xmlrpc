@@ -15,8 +15,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/rogpeppe/go-charset/charset"
-	_ "github.com/rogpeppe/go-charset/data"
+	"golang.org/x/net/html/charset"
 )
 
 // Types used for unmarshalling
