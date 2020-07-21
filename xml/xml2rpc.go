@@ -15,8 +15,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/rogpeppe/go-charset/charset"
-	_ "github.com/rogpeppe/go-charset/data"
+	"golang.org/x/net/html/charset"
 )
 
 // Types used for unmarshalling
@@ -52,7 +51,7 @@ func xml2RPC(xmlraw string, rpc interface{}) error {
 	// Unmarshal raw XML into the temporal structure
 	var ret response
 	decoder := xml.NewDecoder(bytes.NewReader([]byte(xmlraw)))
-	decoder.CharsetReader = charset.NewReader
+	decoder.CharsetReader = charset.NewReaderLabel
 	err := decoder.Decode(&ret)
 	if err != nil {
 		return FaultDecode
