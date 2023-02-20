@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
+	"unicode"
 
 	"github.com/gorilla/rpc"
 )
@@ -74,7 +76,15 @@ type CodecRequest struct {
 // The method uses a dotted notation as in "Service.Method".
 func (c *CodecRequest) Method() (string, error) {
 	if c.err == nil {
-		return c.request.Method, nil
+		ms := strings.Split(c.request.Method, ".")
+		if len(ms) < 2 {
+			return ms[0], nil
+		}
+
+		r := []rune(c.request.Method)
+		r[0] = unicode.ToLower(r[0])
+
+		return fmt.Sprint(ms[0], ".", string(r)), nil
 	}
 	return "", c.err
 }
