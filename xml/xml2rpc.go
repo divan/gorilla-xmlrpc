@@ -31,7 +31,7 @@ type param struct {
 }
 
 type value struct {
-	Array    []value  `xml:"array>data>value"`
+	Array    array    `xml:"array"`
 	Struct   []member `xml:"struct>member"`
 	String   string   `xml:"string"`
 	Int      string   `xml:"int"`
@@ -43,6 +43,13 @@ type value struct {
 	Raw      string   `xml:",innerxml"` // the value can be defualt string
 }
 
+type array struct {
+	Data arrayData `xml:"data"`
+}
+
+type arrayData struct {
+	Values []value `xml:"value"`
+}
 type member struct {
 	Name  string `xml:"name"`
 	Value value  `xml:"value"`
@@ -62,22 +69,40 @@ func xml2RPC(xmlraw string, rpc interface{}) error {
 		return getFaultResponse(ret.Fault)
 	}
 
-	// Structures should have equal number of fields
-	if reflect.TypeOf(rpc).Elem().NumField() != len(ret.Params) {
-		return FaultWrongArgumentsNumber
-	}
+	//fmt.Printf("xml2RPC: ret=%+v\n", ret)
 
 	// Now, convert temporal structure into the
 	// passed rpc variable, according to it's structure
-	for i, param := range ret.Params {
+	fieldNum := reflect.TypeOf(rpc).Elem().NumField()
+	if len(ret.Params) > fieldNum {
+		return FaultWrongArgumentsNumber
+	}
+	//for i, param := range ret.Params {
+	for i := range fieldNum {
 		field := reflect.ValueOf(rpc).Elem().Field(i)
-		err = value2Field(param.Value, &field)
+		if len(ret.Params) > i {
+			err = value2Field(ret.Params[i].Value, &field)
+		} else if reflect.TypeOf(rpc).Elem().Field(i).Tag.Get("default") != "" {
+			err = value2Field(createValue(reflect.TypeOf(rpc).Elem().Field(i).Type.Kind(), reflect.TypeOf(rpc).Elem().Field(i).Tag.Get("default")), &field)
+		} else {
+			return FaultApplicationError
+		}
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
+}
+
+func createValue(kind reflect.Kind, val string) value {
+	v := value{}
+	switch kind {
+	case reflect.Bool:
+		v.Boolean = val
+	case reflect.Int:
+		v.Int = val
+	}
+	return v
 }
 
 // getFaultResponse converts faultValue to Fault.
@@ -88,9 +113,10 @@ func getFaultResponse(fault faultValue) Fault {
 	)
 
 	for _, field := range fault.Value.Struct {
-		if field.Name == "faultCode" {
+		switch field.Name {
+		case "faultCode":
 			code, _ = strconv.Atoi(field.Value.Int)
-		} else if field.Name == "faultString" {
+		case "faultString":
 			str = field.Value.String
 			if str == "" {
 				str = field.Value.Raw
@@ -133,26 +159,26 @@ func value2Field(value value, field *reflect.Value) error {
 			return fault
 		}
 		s := value.Struct
-		for i := 0; i < len(s); i++ {
+		for i := range s {
 			// Uppercase first letter for field name to deal with
 			// methods in lowercase, which cannot be used
 			field_name := uppercaseFirst(s[i].Name)
 			f := field.FieldByName(field_name)
 			err = value2Field(s[i].Value, &f)
 		}
-	case len(value.Array) != 0:
+	case len(value.Array.Data.Values) != 0:
 		a := value.Array
 		f := *field
 		slice := reflect.MakeSlice(reflect.TypeOf(f.Interface()),
-			len(a), len(a))
-		for i := 0; i < len(a); i++ {
+			len(a.Data.Values), len(a.Data.Values))
+		for i := 0; i < len(a.Data.Values); i++ {
 			item := slice.Index(i)
-			err = value2Field(a[i], &item)
+			err = value2Field(a.Data.Values[i], &item)
 		}
 		f = reflect.AppendSlice(f, slice)
 		val = f.Interface()
-	case len(value.Array) == 0:
-		val = val
+	case len(value.Array.Data.Values) == 0:
+		//val = val
 
 	default:
 		// value field is default to string, see http://en.wikipedia.org/wiki/XML-RPC#Data_types

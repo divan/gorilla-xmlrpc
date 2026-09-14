@@ -6,7 +6,6 @@ package xml
 
 import (
 	"io"
-	"io/ioutil"
 )
 
 // EncodeClientRequest encodes parameters for a XML-RPC client request.
@@ -18,7 +17,7 @@ func EncodeClientRequest(method string, args interface{}) ([]byte, error) {
 // DecodeClientResponse decodes the response body of a client request into
 // the interface reply.
 func DecodeClientResponse(r io.Reader, reply interface{}) error {
-	rawxml, err := ioutil.ReadAll(r)
+	rawxml, err := io.ReadAll(r)
 	if err != nil {
 		return FaultSystemError
 	}

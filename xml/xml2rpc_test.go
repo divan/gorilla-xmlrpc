@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type SubStructXml2Rpc struct {
@@ -153,4 +155,39 @@ Requiredattribute'user'notfound:
 			t.Errorf("fault.String should be:\n\n%s\n\nbut got:\n\n%s\n", errstr, fault.String)
 		}
 	}
+}
+
+func TestXML2RPCEmptyArray(t *testing.T) {
+	tests := []struct {
+		name string
+		xml  string
+	}{
+		{"empty array standard", `<methodResponse><params><param><value><array><data></data></array></value></param></params></methodResponse>`},
+		{"empty array self closing data", `<methodResponse><params><param><value><array><data/></array></value></param></params></methodResponse>`},
+	}
+
+	v := struct {
+		Value []interface{}
+	}{}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := xml2RPC(tt.xml, &v)
+			assert.NoError(t, err)
+			assert.Len(t, v.Value, 0)
+		})
+	}
+}
+
+func TestXml2rpc_ArrayWithItems(t *testing.T) {
+	xmlStr := `<methodResponse><params><param><value><array><data><value><string>hello</string></value></data></array></value></param></params></methodResponse>`
+	v := struct {
+		Value []string
+	}{}
+
+	err := xml2RPC(xmlStr, &v)
+	assert.NoError(t, err)
+
+	assert.Len(t, v.Value, 1)
+	assert.Equal(t, "hello", v.Value[0])
 }
