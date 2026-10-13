@@ -7,7 +7,7 @@ XML-RPC spec: http://xmlrpc.scripting.com/spec.html
 
 Installation
 
-Assuming you already imported gorilla/rpc, use the following command:
+Add the package to your module (gorilla/rpc is pulled in automatically):
 
     go get github.com/divan/gorilla-xmlrpc/xml
 

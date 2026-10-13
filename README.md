@@ -10,7 +10,7 @@ It's built on top of gorilla/rpc package in Go(Golang) language and implements X
 Unlike net/rpc from Go strlib, gorilla/rpc allows usage of HTTP POST requests for RPC.
 
 ### Installation ###
-Assuming you already imported gorilla/rpc, use the following command:
+Requires Go 1.20 or newer. Add the package to your module (gorilla/rpc is pulled in automatically):
 
     go get github.com/divan/gorilla-xmlrpc/xml
 
